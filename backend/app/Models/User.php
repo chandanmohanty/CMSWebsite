@@ -28,4 +28,20 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Website::class)->withTimestamps();
     }
+
+    /** null = shared/global scope (e.g. the shared media library), open to all authenticated users. */
+    public function canManageWebsite(?int $websiteId): bool
+    {
+        if ($this->hasRole('super_admin') || $websiteId === null) {
+            return true;
+        }
+
+        return $this->websites()->whereKey($websiteId)->exists();
+    }
+
+    /** @return int[] */
+    public function accessibleWebsiteIds(): array
+    {
+        return $this->websites()->pluck('websites.id')->all();
+    }
 }

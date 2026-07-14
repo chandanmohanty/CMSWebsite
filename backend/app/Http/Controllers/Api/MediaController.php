@@ -11,9 +11,23 @@ use Intervention\Image\ImageManager;
 
 class MediaController extends Controller
 {
+    /** Limit a query to media the user may see: their websites' items + the shared library. */
+    private function scopeToUser(Request $request, $query)
+    {
+        $user = $request->user();
+
+        if ($user->hasRole('super_admin')) {
+            return $query;
+        }
+
+        $ids = $user->accessibleWebsiteIds();
+
+        return $query->where(fn ($q) => $q->whereIn('website_id', $ids)->orWhereNull('website_id'));
+    }
+
     public function index(Request $request)
     {
-        return Media::with('folder')
+        return $this->scopeToUser($request, Media::with('folder'))
             ->when($request->filled('website_id'), fn ($q) => $q->where('website_id', $request->integer('website_id')))
             ->when($request->filled('folder_id'), fn ($q) => $q->where('folder_id', $request->integer('folder_id')))
             ->when($request->filled('type'), fn ($q) => $q->where('type', $request->string('type')))
@@ -31,6 +45,8 @@ class MediaController extends Controller
             'website_id' => ['nullable', 'exists:websites,id'],
             'folder_id' => ['nullable', 'exists:media_folders,id'],
         ]);
+
+        abort_unless($request->user()->canManageWebsite($request->input('website_id')), 403);
 
         $uploaded = [];
 
@@ -81,6 +97,8 @@ class MediaController extends Controller
 
     public function update(Request $request, Media $media)
     {
+        abort_unless($request->user()->canManageWebsite($media->website_id), 403);
+
         $data = $request->validate([
             'alt' => ['nullable', 'string', 'max:255'],
             'tags' => ['nullable', 'array'],
@@ -92,8 +110,10 @@ class MediaController extends Controller
         return $media;
     }
 
-    public function destroy(Media $media)
+    public function destroy(Request $request, Media $media)
     {
+        abort_unless($request->user()->canManageWebsite($media->website_id), 403);
+
         \Illuminate\Support\Facades\Storage::disk($media->disk)->delete(
             array_filter([$media->path, ...array_values($media->conversions ?? [])])
         );
@@ -106,7 +126,7 @@ class MediaController extends Controller
 
     public function folders(Request $request)
     {
-        return MediaFolder::with('children')
+        return $this->scopeToUser($request, MediaFolder::with('children'))
             ->whereNull('parent_id')
             ->when($request->filled('website_id'), fn ($q) => $q->where('website_id', $request->integer('website_id')))
             ->get();
@@ -120,11 +140,15 @@ class MediaController extends Controller
             'parent_id' => ['nullable', 'exists:media_folders,id'],
         ]);
 
+        abort_unless($request->user()->canManageWebsite($data['website_id'] ?? null), 403);
+
         return response()->json(MediaFolder::create($data), 201);
     }
 
-    public function destroyFolder(MediaFolder $folder)
+    public function destroyFolder(Request $request, MediaFolder $folder)
     {
+        abort_unless($request->user()->canManageWebsite($folder->website_id), 403);
+
         $folder->delete();
 
         return response()->noContent();

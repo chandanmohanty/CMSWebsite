@@ -35,6 +35,7 @@ class SettingController extends Controller
         $data = $request->validate(['value' => ['required', 'array']]);
 
         $setting = $website->settings()->updateOrCreate(['group' => $group], ['value' => $data['value']]);
+        \Illuminate\Support\Facades\Cache::forget("site:{$website->id}");
         AuditLog::record('settings_updated', $setting, ['group' => $group], $website->id);
 
         return response()->json($setting->value);

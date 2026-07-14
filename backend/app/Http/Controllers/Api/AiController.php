@@ -89,6 +89,8 @@ class AiController extends Controller
             'context' => ['nullable', 'array'], // tone, target_language, ...
         ]);
 
+        abort_unless($request->user()->canManageWebsite($data['website_id'] ?? null), 403);
+
         $provider = isset($data['provider_id']) ? AiProvider::find($data['provider_id']) : null;
         $website = isset($data['website_id']) ? Website::find($data['website_id']) : null;
 
@@ -138,6 +140,8 @@ class AiController extends Controller
             'folder_id' => ['nullable', 'exists:media_folders,id'],
         ]);
 
+        abort_unless($request->user()->canManageWebsite($data['website_id'] ?? null), 403);
+
         $provider = isset($data['provider_id']) ? AiProvider::find($data['provider_id']) : null;
 
         try {
@@ -178,7 +182,13 @@ class AiController extends Controller
 
     public function history(Request $request)
     {
+        $user = $request->user();
+
         return AiGeneration::with('provider:id,name,driver', 'media')
+            // Non-super-admins see only their own generations and their websites' history.
+            ->when(! $user->hasRole('super_admin'), fn ($q) => $q->where(
+                fn ($qq) => $qq->whereIn('website_id', $user->accessibleWebsiteIds())->orWhere('user_id', $user->id)
+            ))
             ->when($request->filled('website_id'), fn ($q) => $q->where('website_id', $request->integer('website_id')))
             ->latest()
             ->paginate($request->integer('per_page', 25));

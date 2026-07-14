@@ -7,9 +7,24 @@ use App\Models\Post;
 use App\Models\Website;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class PostController extends Controller
 {
+    private function assertUniqueSlug(Website $website, string $slug, ?int $ignoreId = null): void
+    {
+        // withTrashed: the DB unique index also covers soft-deleted posts.
+        $exists = Post::withTrashed()
+            ->where('website_id', $website->id)
+            ->where('slug', $slug)
+            ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
+            ->exists();
+
+        if ($exists) {
+            throw ValidationException::withMessages(['slug' => "A post with slug '{$slug}' already exists on this website (possibly in the trash)."]);
+        }
+    }
+
     public function index(Request $request, Website $website)
     {
         return $website->hasMany(Post::class)->getQuery()
@@ -26,6 +41,7 @@ class PostController extends Controller
         $data['website_id'] = $website->id;
         $data['author_id'] = $request->user()->id;
         $data['slug'] = Str::slug($data['slug'] ?? $data['title']);
+        $this->assertUniqueSlug($website, $data['slug']);
 
         $post = Post::create(collect($data)->except(['categories', 'tags', 'seo'])->all());
         $this->syncRelations($post, $data);
@@ -48,6 +64,7 @@ class PostController extends Controller
 
         if (isset($data['slug'])) {
             $data['slug'] = Str::slug($data['slug']);
+            $this->assertUniqueSlug($website, $data['slug'], $post->id);
         }
 
         $post->update(collect($data)->except(['categories', 'tags', 'seo'])->all());

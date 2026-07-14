@@ -8,11 +8,32 @@ use App\Models\Page;
 use App\Models\PageRevision;
 use App\Models\Website;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class PageController extends Controller
 {
+    /** Bust the public renderer cache for a page path. */
+    private function forgetPageCache(Website $website, string $slug): void
+    {
+        Cache::forget("page:{$website->id}:{$slug}");
+    }
+
+    private function assertUniqueSlug(Website $website, string $slug, ?int $ignoreId = null): void
+    {
+        // withTrashed: the DB unique index also covers soft-deleted pages.
+        $exists = $website->pages()->withTrashed()
+            ->where('slug', $slug)
+            ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
+            ->exists();
+
+        if ($exists) {
+            throw ValidationException::withMessages(['slug' => "A page with slug '{$slug}' already exists on this website (possibly in the trash)."]);
+        }
+    }
+
     public function index(Request $request, Website $website)
     {
         return $website->pages()
@@ -34,6 +55,7 @@ class PageController extends Controller
         ]);
 
         $data['slug'] = Str::slug($data['slug'] ?? $data['title']);
+        $this->assertUniqueSlug($website, $data['slug']);
         $data['created_by'] = $request->user()->id;
 
         $page = $website->pages()->create($data);
@@ -87,9 +109,13 @@ class PageController extends Controller
 
         if (isset($data['slug'])) {
             $data['slug'] = Str::slug($data['slug']);
+            $this->assertUniqueSlug($website, $data['slug'], $page->id);
         }
 
+        $originalSlug = $page->slug;
         $page->update(collect($data)->except('seo')->all());
+        $this->forgetPageCache($website, $originalSlug);
+        $this->forgetPageCache($website, $page->slug);
 
         if (isset($data['seo'])) {
             $page->seo()->updateOrCreate([], collect($data['seo'])->only([
@@ -117,7 +143,12 @@ class PageController extends Controller
             'sections.*.is_visible' => ['nullable', 'boolean'],
         ]);
 
-        DB::transaction(function () use ($page, $data) {
+        DB::transaction(function () use ($request, $page, $data) {
+            // Safety snapshot: a bad builder save must never be able to destroy content.
+            if ($page->sections()->exists()) {
+                $page->snapshot($request->user()->id, 'auto (pre-builder-save)');
+            }
+
             $page->sections()->delete();
 
             foreach ($data['sections'] as $i => $section) {
@@ -132,6 +163,8 @@ class PageController extends Controller
             }
         });
 
+        $this->forgetPageCache($website, $page->slug);
+
         return $page->load('sections');
     }
 
@@ -142,6 +175,7 @@ class PageController extends Controller
 
         $page->snapshot($request->user()->id, 'publish');
         $page->update(['status' => 'published', 'published_at' => now()]);
+        $this->forgetPageCache($website, $page->slug);
 
         AuditLog::record('published', $page, null, $website->id);
 
@@ -152,6 +186,7 @@ class PageController extends Controller
     {
         abort_unless($page->website_id === $website->id, 404);
         $page->update(['status' => 'draft']);
+        $this->forgetPageCache($website, $page->slug);
 
         return $page;
     }
@@ -179,6 +214,7 @@ class PageController extends Controller
             }
         });
 
+        $this->forgetPageCache($website, $page->slug);
         AuditLog::record('rolled_back', $page, ['revision_id' => $revision->id], $website->id);
 
         return $page->load('sections');
@@ -188,6 +224,7 @@ class PageController extends Controller
     {
         abort_unless($page->website_id === $website->id, 404);
         AuditLog::record('deleted', $page, null, $website->id);
+        $this->forgetPageCache($website, $page->slug);
         $page->delete();
 
         return response()->noContent();

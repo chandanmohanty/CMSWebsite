@@ -13,11 +13,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->statefulApi();
+        // Pure bearer-token API: statefulApi() is intentionally NOT enabled -
+        // it would subject admin requests from the SPA origin to CSRF checks.
 
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'website.access' => \App\Http\Middleware\EnsureWebsiteAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -15,7 +15,7 @@ use App\Http\Controllers\Public\SiteController;
 use Illuminate\Support\Facades\Route;
 
 // ---------- Public (consumed by the Next.js site renderer) ----------
-Route::prefix('public')->group(function () {
+Route::prefix('public')->middleware('throttle:240,1')->group(function () {
     Route::get('site', [SiteController::class, 'site']);
     Route::get('page', [SiteController::class, 'page']);
     Route::get('posts', [SiteController::class, 'posts']);
@@ -31,7 +31,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('auth/logout', [AuthController::class, 'logout']);
 
     // ---------- Templates (super admin) ----------
-    Route::middleware('role:super_admin')->group(function () {
+    // Note: the guard argument ('sanctum') is required - without it spatie's
+    // middleware resolves the user from the default web guard and always 403s.
+    Route::middleware('role:super_admin,sanctum')->group(function () {
         Route::apiResource('templates', TemplateController::class);
         Route::post('templates/{template}/layouts', [TemplateController::class, 'storeLayout']);
         Route::put('templates/{template}/layouts/{layout}', [TemplateController::class, 'updateLayout']);
@@ -48,11 +50,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('template-catalog', [TemplateController::class, 'index']);
     Route::get('template-catalog/{template}', [TemplateController::class, 'show']);
 
-    // ---------- Websites ----------
-    Route::apiResource('websites', WebsiteController::class);
-    Route::post('websites/{website}/switch-template', [WebsiteController::class, 'switchTemplate']);
+    // ---------- Websites (tenant-scoped via website.access) ----------
+    Route::apiResource('websites', WebsiteController::class)->middleware('website.access');
+    Route::post('websites/{website}/switch-template', [WebsiteController::class, 'switchTemplate'])->middleware('website.access');
 
-    Route::prefix('websites/{website}')->group(function () {
+    Route::prefix('websites/{website}')->middleware('website.access')->group(function () {
         // Pages + builder
         Route::apiResource('pages', PageController::class)->except('index');
         Route::get('pages', [PageController::class, 'index']);

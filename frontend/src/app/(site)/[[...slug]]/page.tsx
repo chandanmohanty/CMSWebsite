@@ -62,7 +62,10 @@ export default async function SitePage({ params }: Props) {
 
   return (
     <div style={cssVars}>
-      {data.page.custom_css && <style dangerouslySetInnerHTML={{ __html: data.page.custom_css }} />}
+      {data.page.custom_css && (
+        // Escape any closing style tag so admin CSS cannot break out into markup context.
+        <style dangerouslySetInnerHTML={{ __html: data.page.custom_css.replace(/<\/style/gi, "<\\/style") }} />
+      )}
       {data.seo?.schema_markup && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data.seo.schema_markup) }} />
       )}

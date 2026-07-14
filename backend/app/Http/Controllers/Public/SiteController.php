@@ -18,28 +18,39 @@ use Illuminate\Support\Facades\Cache;
  */
 class SiteController extends Controller
 {
+    /** Settings groups safe to expose publicly. `integrations` (CRM keys, webhooks) is deliberately excluded. */
+    private const PUBLIC_SETTING_GROUPS = ['header', 'footer', 'theme', 'seo', 'social', 'robots'];
+
     private function resolveWebsite(Request $request): Website
     {
         $domain = $request->string('domain')->toString();
         $slug = $request->string('site')->toString();
 
         return Website::with('template')
+            ->where('status', '!=', 'disabled')
             ->when($domain, fn ($q) => $q->where('domain', $domain))
             ->when(! $domain && $slug, fn ($q) => $q->where('slug', $slug))
             ->firstOrFail();
+    }
+
+    /** Preview (drafts, cache bypass) requires a valid admin token - never available anonymously. */
+    private function isPreview(Request $request): bool
+    {
+        return $request->boolean('preview') && auth('sanctum')->check();
     }
 
     /** Everything the frontend layout needs: site info, theme, header/footer config, menus. */
     public function site(Request $request)
     {
         $website = $this->resolveWebsite($request);
-        $preview = $request->boolean('preview');
+        $preview = $this->isPreview($request);
 
         $payload = fn () => [
             'website' => $website->only(['id', 'name', 'slug', 'domain', 'industry', 'default_locale', 'locales']),
             'template' => $website->template?->only(['slug', 'design_tokens', 'version']),
-            'settings' => $website->settings()->get()->pluck('value', 'group'),
-            'menus' => $website->menus()->with('items.children.children')->get()
+            'settings' => $website->settings()->whereIn('group', self::PUBLIC_SETTING_GROUPS)->get()->pluck('value', 'group'),
+            // Eager-load each level's page to avoid N+1 in resolvedUrl().
+            'menus' => $website->menus()->with('items.page', 'items.children.page', 'items.children.children.page')->get()
                 ->mapWithKeys(fn ($menu) => [$menu->location => $this->serializeItems($menu->items)]),
         ];
 
@@ -51,10 +62,15 @@ class SiteController extends Controller
     {
         $website = $this->resolveWebsite($request);
         $path = trim($request->string('path')->toString(), '/');
-        $preview = $request->boolean('preview'); // preview mode shows drafts (admin-triggered live preview)
+        $preview = $this->isPreview($request);
 
         $page = Page::where('website_id', $website->id)
-            ->where('slug', $path === '' ? '' : $path)
+            // The root path matches an explicit empty slug or the designated home page.
+            ->where(function ($q) use ($path) {
+                $path === ''
+                    ? $q->where('slug', '')->orWhere('page_type', 'home')
+                    : $q->where('slug', $path);
+            })
             ->when(! $preview, fn ($q) => $q->where('status', 'published')->where('visibility', 'public'))
             ->with('sections.globalBlock', 'seo', 'bannerMedia', 'featuredMedia')
             ->firstOrFail();
@@ -123,9 +139,12 @@ class SiteController extends Controller
 
         $validated = $request->validate($rules + ['data' => ['required', 'array']]);
 
+        // Persist only fields declared in the form schema - arbitrary extra keys are dropped.
+        $declared = collect($form->schema['fields'] ?? [])->pluck('name')->filter()->all();
+
         $submission = FormSubmission::create([
             'form_id' => $form->id,
-            'data' => $validated['data'],
+            'data' => collect($validated['data'])->only($declared)->all(),
             'ip_address' => $request->ip(),
             'user_agent' => substr((string) $request->userAgent(), 0, 255),
         ]);

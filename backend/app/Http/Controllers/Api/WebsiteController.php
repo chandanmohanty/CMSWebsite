@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Website;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class WebsiteController extends Controller
@@ -26,6 +27,8 @@ class WebsiteController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless($request->user()->can('manage_websites'), 403);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'domain' => ['nullable', 'string', 'max:255', 'unique:websites,domain'],
@@ -37,6 +40,10 @@ class WebsiteController extends Controller
         $data['slug'] = Str::slug($data['name']).'-'.Str::lower(Str::random(4));
 
         $website = Website::create($data);
+
+        // The creator manages the website they created (super admins already see everything).
+        $website->users()->attach($request->user()->id);
+
         AuditLog::record('created', $website, $data, $website->id);
 
         return response()->json($website, 201);
@@ -59,6 +66,7 @@ class WebsiteController extends Controller
         ]);
 
         $website->update($data);
+        Cache::forget("site:{$website->id}");
         AuditLog::record('updated', $website, $data, $website->id);
 
         return $website;
@@ -73,14 +81,19 @@ class WebsiteController extends Controller
         $data = $request->validate(['template_id' => ['required', 'exists:templates,id']]);
 
         $website->update($data);
+        Cache::forget("site:{$website->id}");
         AuditLog::record('template_switched', $website, $data, $website->id);
 
         return $website->load('template.layouts');
     }
 
-    public function destroy(Website $website)
+    public function destroy(Request $request, Website $website)
     {
+        // Deleting a website cascades to all its content - super admin only.
+        abort_unless($request->user()->hasRole('super_admin'), 403);
+
         AuditLog::record('deleted', $website, null, $website->id);
+        Cache::forget("site:{$website->id}");
         $website->delete();
 
         return response()->noContent();
