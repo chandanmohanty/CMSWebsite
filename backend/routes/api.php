@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\TemplateController;
+use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\Api\TwoFactorController;
 use App\Http\Controllers\Api\WebsiteController;
 use App\Http\Controllers\Public\SiteController;
@@ -71,6 +72,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('pages/{page}/unpublish', [PageController::class, 'unpublish']);
         Route::get('pages/{page}/revisions', [PageController::class, 'revisions']);
         Route::post('pages/{page}/revisions/{revision}/rollback', [PageController::class, 'rollback']);
+        Route::get('pages/{page}/translations/{locale}', [TranslationController::class, 'show']);
+        Route::put('pages/{page}/translations/{locale}', [TranslationController::class, 'update']);
 
         // Navigation
         Route::get('menus', [MenuController::class, 'index']);

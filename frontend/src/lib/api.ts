@@ -29,9 +29,10 @@ export function fetchSite(): Promise<SitePayload | null> {
   return getJson<SitePayload>(`public/site?${siteQuery()}`);
 }
 
-export function fetchPage(path: string, preview = false): Promise<PagePayload | null> {
+export function fetchPage(path: string, preview = false, locale = ""): Promise<PagePayload | null> {
   const previewParam = preview ? "&preview=1" : "";
-  return getJson<PagePayload>(`public/page?${siteQuery()}&path=${encodeURIComponent(path)}${previewParam}`);
+  const localeParam = locale ? `&locale=${encodeURIComponent(locale)}` : "";
+  return getJson<PagePayload>(`public/page?${siteQuery()}&path=${encodeURIComponent(path)}${previewParam}${localeParam}`);
 }
 
 // ---- Admin client (browser-side, token auth) ----

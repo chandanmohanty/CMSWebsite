@@ -7,7 +7,9 @@ use App\Mail\FormSubmissionReceived;
 use App\Models\Form;
 use App\Models\FormSubmission;
 use App\Models\Page;
+use App\Models\PageSection;
 use App\Models\Post;
+use App\Models\Translation;
 use App\Models\Website;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -60,12 +62,25 @@ class SiteController extends Controller
         return $preview ? $payload() : Cache::remember("site:{$website->id}", 300, $payload);
     }
 
-    /** Resolve a page by path and return its renderable section stack + SEO. */
+    /** A requested locale is honored only when it is an enabled non-default language. */
+    private function resolveLocale(Request $request, Website $website): string
+    {
+        $locale = $request->string('locale')->toString();
+
+        if ($locale && $locale !== $website->default_locale && in_array($locale, $website->locales ?? [], true)) {
+            return $locale;
+        }
+
+        return '';
+    }
+
+    /** Resolve a page by path and return its renderable section stack + SEO, merged with locale translations. */
     public function page(Request $request)
     {
         $website = $this->resolveWebsite($request);
         $path = trim($request->string('path')->toString(), '/');
         $preview = $this->isPreview($request);
+        $locale = $this->resolveLocale($request, $website);
 
         $page = Page::where('website_id', $website->id)
             // The root path matches an explicit empty slug or the designated home page.
@@ -78,19 +93,47 @@ class SiteController extends Controller
             ->with('sections.globalBlock', 'seo', 'bannerMedia', 'featuredMedia')
             ->firstOrFail();
 
-        $payload = fn () => [
-            'page' => $page->only(['id', 'title', 'slug', 'page_type', 'custom_css', 'custom_js', 'published_at']),
-            'banner' => $page->bannerMedia?->only(['url', 'alt', 'width', 'height']),
-            'seo' => $page->seo,
-            'sections' => $page->sections->where('is_visible', true)->values()->map(fn ($s) => [
-                'id' => $s->id,
-                'block_type' => $s->block_type,
-                'content' => $s->resolvedContent(),
-                'settings' => $s->settings,
-            ]),
-        ];
+        $payload = function () use ($website, $page, $locale) {
+            $pageOverride = [];
+            $sectionOverrides = collect();
 
-        return $preview ? $payload() : Cache::remember("page:{$website->id}:{$path}", 300, $payload);
+            if ($locale) {
+                $rows = Translation::where('website_id', $website->id)
+                    ->where('locale', $locale)
+                    ->where(function ($q) use ($page) {
+                        $q->where(fn ($qq) => $qq->where('translatable_type', Page::class)->where('translatable_id', $page->id))
+                            ->orWhere(fn ($qq) => $qq->where('translatable_type', PageSection::class)->whereIn('translatable_id', $page->sections->pluck('id')));
+                    })
+                    ->get();
+
+                $pageOverride = $rows->first(fn ($r) => $r->translatable_type === Page::class)?->data ?? [];
+                $sectionOverrides = $rows->where('translatable_type', PageSection::class)->keyBy('translatable_id');
+            }
+
+            $seo = $page->seo?->toArray();
+
+            if ($seo && $pageOverride) {
+                $seo['meta_title'] = $pageOverride['meta_title'] ?? $seo['meta_title'];
+                $seo['meta_description'] = $pageOverride['meta_description'] ?? $seo['meta_description'];
+            }
+
+            return [
+                'page' => array_merge(
+                    $page->only(['id', 'title', 'slug', 'page_type', 'custom_css', 'custom_js', 'published_at']),
+                    ['title' => $pageOverride['title'] ?? $page->title, 'locale' => $locale ?: $website->default_locale]
+                ),
+                'banner' => $page->bannerMedia?->only(['url', 'alt', 'width', 'height']),
+                'seo' => $seo,
+                'sections' => $page->sections->where('is_visible', true)->values()->map(fn ($s) => [
+                    'id' => $s->id,
+                    'block_type' => $s->block_type,
+                    'content' => $sectionOverrides[$s->id]->data ?? $s->resolvedContent(),
+                    'settings' => $s->settings,
+                ]),
+            ];
+        };
+
+        return $preview ? $payload() : Cache::remember("page:{$website->id}:{$path}:{$locale}", 300, $payload);
     }
 
     public function posts(Request $request)

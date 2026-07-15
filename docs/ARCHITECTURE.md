@@ -84,12 +84,15 @@ Draft preview: the same endpoints accept `?preview=1` (bypasses cache, shows dra
 - Stateless API → horizontal scaling behind a load balancer; swap cache/session drivers to Redis via `.env`.
 - Media on the `public` disk locally; swap to S3 + CDN via Laravel filesystem config, zero code changes.
 
+## Translations (multi-language)
+
+- `translations` table: polymorphic per-locale JSON overlays (Page, PageSection today; extensible to MenuItem/Post). Base content is never modified — a translation shadows it for one locale and merges at render time, so missing translations fall back to the base language field-by-field.
+- Public: `GET /api/public/page?locale=xx` serves merged content (cached per locale); websites carry `default_locale` + enabled `locales`.
+- URLs: default locale at `/`, others prefixed (`/fr/about`); the renderer emits hreflang alternates and the header shows a language selector.
+- Admin: per-page side-by-side editor driven by the block schema (it knows which content paths are text), with per-field and bulk AI translation via the existing `translate` task.
+
 ## Roadmap (not yet implemented)
 
-1. Drag-and-drop builder UI (backend contract is ready: `PUT pages/{id}/sections` accepts the full ordered stack).
-2. Menu editor UI (`PUT menus/{id}/items` accepts the nested tree).
-3. Theme customizer UI over `website_settings.theme`.
-4. Form renderer component + email notifications/CRM webhooks on submission.
-5. XML sitemap + robots.txt endpoints (data already modeled).
-6. Webhooks, GraphQL facade, plugin/module system.
-7. Translations/multi-language content tables.
+1. Webhooks, GraphQL facade, plugin/module system.
+2. Global block + menu label + blog post translations (the `translations` table already supports them).
+3. CRM webhook delivery on form submissions (`forms.integrations` is modeled).

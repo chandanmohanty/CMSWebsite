@@ -15,10 +15,14 @@ use Illuminate\Validation\ValidationException;
 
 class PageController extends Controller
 {
-    /** Bust the public renderer cache for a page path. */
+    /** Bust the public renderer cache for a page path - the default and every locale variant. */
     private function forgetPageCache(Website $website, string $slug): void
     {
-        Cache::forget("page:{$website->id}:{$slug}");
+        Cache::forget("page:{$website->id}:{$slug}:");
+
+        foreach ($website->locales ?? [] as $locale) {
+            Cache::forget("page:{$website->id}:{$slug}:{$locale}");
+        }
     }
 
     private function assertUniqueSlug(Website $website, string $slug, ?int $ignoreId = null): void

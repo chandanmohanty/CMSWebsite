@@ -4,25 +4,35 @@ import { BlockRenderer } from "@/components/blocks";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { fetchPage, fetchSite } from "@/lib/api";
+import { localizedHref, splitLocaleFromPath } from "@/lib/locales";
 import { themeToCssVars, type ThemeSettings } from "@/lib/theme";
 
 type Props = { params: Promise<{ slug?: string[] }> };
 
-function pathFrom(slug?: string[]): string {
-  return (slug ?? []).join("/");
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const data = await fetchPage(pathFrom(slug));
+  const site = await fetchSite();
+  if (!site) return {};
+
+  const { locale, path } = splitLocaleFromPath(slug ?? [], site);
+  const data = await fetchPage(path, false, locale);
   if (!data) return {};
+
+  // hreflang alternates for every enabled language.
+  const languages: Record<string, string> = { [site.website.default_locale]: localizedHref("", path, site.website.default_locale) };
+  for (const loc of site.website.locales ?? []) {
+    languages[loc] = localizedHref(loc, path, site.website.default_locale);
+  }
 
   const seo = data.seo;
   return {
     title: seo?.meta_title ?? data.page.title,
     description: seo?.meta_description ?? undefined,
     keywords: seo?.keywords ?? undefined,
-    alternates: seo?.canonical_url ? { canonical: seo.canonical_url } : undefined,
+    alternates: {
+      ...(seo?.canonical_url ? { canonical: seo.canonical_url } : {}),
+      ...(Object.keys(languages).length > 1 ? { languages } : {}),
+    },
     openGraph: seo?.open_graph ?? undefined,
     twitter: seo?.twitter_card ?? undefined,
     robots: seo?.robots ?? undefined,
@@ -31,7 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function SitePage({ params }: Props) {
   const { slug } = await params;
-  const [site, data] = await Promise.all([fetchSite(), fetchPage(pathFrom(slug))]);
+  const site = await fetchSite();
 
   // Friendly setup screen while the Laravel API isn't reachable yet.
   if (!site) {
@@ -52,13 +62,15 @@ export default async function SitePage({ params }: Props) {
     );
   }
 
+  const { locale, path } = splitLocaleFromPath(slug ?? [], site);
+  const data = await fetchPage(path, false, locale);
   if (!data) notFound();
 
   // Template design tokens + per-website theme customizer overrides.
   const cssVars = themeToCssVars(site.template?.design_tokens, site.settings.theme as ThemeSettings | undefined) as React.CSSProperties;
 
   return (
-    <div style={cssVars} className="themed">
+    <div style={cssVars} className="themed" lang={locale || site.website.default_locale}>
       {data.page.custom_css && (
         // Escape any closing style tag so admin CSS cannot break out into markup context.
         <style dangerouslySetInnerHTML={{ __html: data.page.custom_css.replace(/<\/style/gi, "<\\/style") }} />
@@ -66,7 +78,7 @@ export default async function SitePage({ params }: Props) {
       {data.seo?.schema_markup && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data.seo.schema_markup) }} />
       )}
-      <Header site={site} />
+      <Header site={site} currentLocale={locale} currentPath={path} />
       <main>
         <BlockRenderer sections={data.sections} />
       </main>

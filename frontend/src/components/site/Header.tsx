@@ -1,3 +1,4 @@
+import { localeName, localizedHref } from "@/lib/locales";
 import type { MenuItem, SitePayload } from "@/lib/types";
 
 function NavItem({ item }: { item: MenuItem }) {
@@ -21,12 +22,16 @@ function NavItem({ item }: { item: MenuItem }) {
   );
 }
 
-export function Header({ site }: { site: SitePayload }) {
+export function Header({ site, currentLocale = "", currentPath = "" }: { site: SitePayload; currentLocale?: string; currentPath?: string }) {
   const header = site.settings.header ?? {};
   const menu = site.menus.header_primary ?? [];
   const logo = header.logo_url as string | undefined;
   const cta = header.cta as { label?: string; url?: string } | undefined;
   const sticky = header.sticky !== false;
+  const defaultLocale = site.website.default_locale;
+  // Language selector appears once the site has translation languages enabled.
+  const allLocales = [defaultLocale, ...(site.website.locales ?? []).filter((l) => l !== defaultLocale)];
+  const activeLocale = currentLocale || defaultLocale;
 
   return (
     <header className={`${sticky ? "sticky top-0" : ""} z-30 border-b border-slate-200 bg-white/90 backdrop-blur`}>
@@ -41,11 +46,33 @@ export function Header({ site }: { site: SitePayload }) {
             ))}
           </ul>
         </nav>
-        {cta?.label && (
-          <a href={cta.url ?? "#"} className="btn rounded-lg bg-[var(--color-primary,#0e7490)] px-4 py-2 text-sm font-semibold text-white">
-            {cta.label}
-          </a>
-        )}
+        <div className="flex items-center gap-3">
+          {allLocales.length > 1 && (
+            <details className="group relative">
+              <summary className="cursor-pointer list-none rounded-lg px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100" title="Language">
+                🌐 {activeLocale.toUpperCase()}
+              </summary>
+              <ul className="absolute right-0 top-full z-20 mt-1 min-w-36 rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+                {allLocales.map((loc) => (
+                  <li key={loc}>
+                    <a
+                      href={localizedHref(loc, currentPath, defaultLocale)}
+                      className={`block px-3 py-1.5 text-sm hover:bg-slate-50 ${loc === activeLocale ? "font-semibold text-cyan-700" : "text-slate-700"}`}
+                      hrefLang={loc}
+                    >
+                      {localeName(loc)}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+          {cta?.label && (
+            <a href={cta.url ?? "#"} className="btn rounded-lg bg-[var(--color-primary,#0e7490)] px-4 py-2 text-sm font-semibold text-white">
+              {cta.label}
+            </a>
+          )}
+        </div>
       </div>
     </header>
   );

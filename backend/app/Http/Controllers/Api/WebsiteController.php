@@ -61,7 +61,8 @@ class WebsiteController extends Controller
             'domain' => ['nullable', 'string', 'max:255', 'unique:websites,domain,'.$website->id],
             'industry' => ['sometimes', 'string', 'max:100'],
             'default_locale' => ['sometimes', 'string', 'max:10'],
-            'locales' => ['sometimes', 'array'],
+            'locales' => ['sometimes', 'array', 'max:20'],
+            'locales.*' => ['string', 'max:10'],
             'status' => ['sometimes', 'in:active,maintenance,disabled'],
         ]);
 
