@@ -116,6 +116,95 @@ class SiteController extends Controller
             ->firstOrFail();
     }
 
+    /** Absolute-URL base for sitemap/robots links: the caller's origin, falling back to the website domain. */
+    private function baseUrl(Request $request, Website $website): string
+    {
+        $base = rtrim($request->string('base')->toString(), '/');
+
+        if ($base && filter_var($base, FILTER_VALIDATE_URL)) {
+            return $base;
+        }
+
+        return 'https://'.($website->domain ?? 'localhost');
+    }
+
+    /** XML sitemap: published public pages (minus noindex) + posts under the blog page, if any. */
+    public function sitemap(Request $request)
+    {
+        $website = $this->resolveWebsite($request);
+        $base = $this->baseUrl($request, $website);
+
+        $xml = Cache::remember("sitemap:{$website->id}:{$base}", 600, function () use ($website, $base) {
+            $pages = Page::where('website_id', $website->id)
+                ->where('status', 'published')
+                ->where('visibility', 'public')
+                ->with('seo:id,metable_id,metable_type,robots')
+                ->get(['id', 'slug', 'page_type', 'updated_at']);
+
+            $urls = [];
+
+            foreach ($pages as $page) {
+                if (str_contains(strtolower($page->seo->robots ?? ''), 'noindex')) {
+                    continue;
+                }
+                $urls[] = [
+                    'loc' => $base.'/'.ltrim($page->slug, '/'),
+                    'lastmod' => $page->updated_at?->toAtomString(),
+                ];
+            }
+
+            // Posts are addressable once the site has a published blog page: /{blog-slug}/{post-slug}
+            $blogPage = $pages->firstWhere('page_type', 'blog');
+
+            if ($blogPage) {
+                $posts = Post::where('website_id', $website->id)
+                    ->where('status', 'published')
+                    ->get(['slug', 'updated_at']);
+
+                foreach ($posts as $post) {
+                    $urls[] = [
+                        'loc' => $base.'/'.trim($blogPage->slug, '/').'/'.$post->slug,
+                        'lastmod' => $post->updated_at?->toAtomString(),
+                    ];
+                }
+            }
+
+            $body = '<?xml version="1.0" encoding="UTF-8"?>'."\n";
+            $body .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n";
+
+            foreach ($urls as $url) {
+                $body .= '  <url><loc>'.e($url['loc']).'</loc>';
+                if ($url['lastmod']) {
+                    $body .= '<lastmod>'.e($url['lastmod']).'</lastmod>';
+                }
+                $body .= "</url>\n";
+            }
+
+            return $body.'</urlset>';
+        });
+
+        return response($xml, 200, ['Content-Type' => 'application/xml; charset=UTF-8']);
+    }
+
+    /** robots.txt: custom content from the `robots` settings group, or a safe default. Always advertises the sitemap. */
+    public function robots(Request $request)
+    {
+        $website = $this->resolveWebsite($request);
+        $base = $this->baseUrl($request, $website);
+
+        $custom = $website->setting('robots')['content'] ?? null;
+
+        $content = is_string($custom) && trim($custom) !== ''
+            ? trim($custom)
+            : "User-agent: *\nAllow: /\nDisallow: /admin";
+
+        if (! str_contains($content, 'Sitemap:')) {
+            $content .= "\n\nSitemap: {$base}/sitemap.xml";
+        }
+
+        return response($content."\n", 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
+    }
+
     /** Public form definition for the site renderer. Only safe fields - never notifications/integrations. */
     public function form(Request $request, string $slug)
     {
