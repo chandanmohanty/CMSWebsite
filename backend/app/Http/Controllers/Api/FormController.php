@@ -23,6 +23,8 @@ class FormController extends Controller
             'schema' => ['required', 'array'],
             'schema.fields' => ['required', 'array'],
             'notifications' => ['nullable', 'array'],
+            'notifications.emails' => ['nullable', 'array', 'max:10'],
+            'notifications.emails.*' => ['email', 'max:255'],
             'integrations' => ['nullable', 'array'],
             'spam_protection' => ['sometimes', 'boolean'],
         ]);
@@ -48,6 +50,8 @@ class FormController extends Controller
             'name' => ['sometimes', 'string', 'max:255'],
             'schema' => ['sometimes', 'array'],
             'notifications' => ['nullable', 'array'],
+            'notifications.emails' => ['nullable', 'array', 'max:10'],
+            'notifications.emails.*' => ['email', 'max:255'],
             'integrations' => ['nullable', 'array'],
             'spam_protection' => ['sometimes', 'boolean'],
             'is_active' => ['sometimes', 'boolean'],

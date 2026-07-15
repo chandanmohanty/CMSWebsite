@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Mail\FormSubmissionReceived;
 use App\Models\Form;
 use App\Models\FormSubmission;
 use App\Models\Page;
@@ -10,6 +11,8 @@ use App\Models\Post;
 use App\Models\Website;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * Read-only endpoints consumed by the Next.js renderer.
@@ -162,7 +165,32 @@ class SiteController extends Controller
             'user_agent' => substr((string) $request->userAgent(), 0, 255),
         ]);
 
+        $this->notifyRecipients($form, $submission);
+
         return response()->json(['message' => 'Submission received.', 'id' => $submission->id], 201);
+    }
+
+    /** Email the form's configured recipients. Failures are logged - they never break the visitor's submission. */
+    private function notifyRecipients(Form $form, FormSubmission $submission): void
+    {
+        $recipients = collect($form->notifications['emails'] ?? [])
+            ->filter(fn ($email) => is_string($email) && filter_var($email, FILTER_VALIDATE_EMAIL))
+            ->unique()
+            ->values();
+
+        if ($recipients->isEmpty()) {
+            return;
+        }
+
+        try {
+            Mail::to($recipients->all())->send(new FormSubmissionReceived($form, $submission));
+        } catch (\Throwable $e) {
+            Log::warning('Form notification email failed', [
+                'form_id' => $form->id,
+                'submission_id' => $submission->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     private function serializeItems($items): array
