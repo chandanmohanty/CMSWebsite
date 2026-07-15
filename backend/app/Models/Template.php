@@ -6,9 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Template extends Model
 {
-    protected $fillable = ['name', 'slug', 'industry', 'description', 'thumbnail_url', 'version', 'design_tokens', 'is_active'];
+    protected $fillable = ['name', 'slug', 'industry', 'description', 'thumbnail_url', 'version', 'design_tokens', 'default_settings', 'is_active'];
 
-    protected $casts = ['design_tokens' => 'array', 'is_active' => 'boolean'];
+    protected $casts = ['design_tokens' => 'array', 'default_settings' => 'array', 'is_active' => 'boolean'];
 
     public function layouts()
     {

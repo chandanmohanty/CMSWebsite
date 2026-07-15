@@ -26,6 +26,7 @@ class TemplateController extends Controller
             'description' => ['nullable', 'string'],
             'thumbnail_url' => ['nullable', 'string'],
             'design_tokens' => ['nullable', 'array'],
+            'default_settings' => ['nullable', 'array'],
         ]);
 
         $data['slug'] = Str::slug($data['name']);
@@ -46,6 +47,7 @@ class TemplateController extends Controller
             'description' => ['nullable', 'string'],
             'thumbnail_url' => ['nullable', 'string'],
             'design_tokens' => ['nullable', 'array'],
+            'default_settings' => ['nullable', 'array'],
             'version' => ['sometimes', 'string', 'max:20'],
             'is_active' => ['sometimes', 'boolean'],
         ]);

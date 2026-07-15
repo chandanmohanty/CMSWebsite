@@ -21,9 +21,22 @@ class LegalTemplateSeeder extends Seeder
                 'industry' => 'law',
                 'description' => 'Consultation-focused template for law firms and legal-services platforms: practice areas, how-it-works, FAQs and a consultation form.',
                 'design_tokens' => [
-                    'colors' => ['primary' => '#0f5e9c', 'secondary' => '#0b2545', 'accent' => '#14b8a6'],
+                    'colors' => ['primary' => '#1b2b4b', 'secondary' => '#12203c', 'accent' => '#efb639'],
                     'typography' => ['heading' => 'Georgia', 'body' => 'system-ui'],
                     'radius' => '0.5rem',
+                ],
+                'default_settings' => [
+                    'header' => [
+                        'style' => 'dark',
+                        'sticky' => true,
+                        'show_language' => true,
+                        'secondary_cta' => ['label' => 'Register as a Lawyer', 'url' => '/contact'],
+                        'cta' => ['label' => 'Talk to a Lawyer', 'url' => '/contact'],
+                    ],
+                    'footer' => [
+                        'company_info' => 'Clear legal help for people and businesses — confidential consultations, honest fees.',
+                        'copyright' => '© '.date('Y').' Your Firm Name. All rights reserved.',
+                    ],
                 ],
                 'is_active' => true,
             ]

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Form;
@@ -111,6 +112,13 @@ class WebsiteController extends Controller
 
             // Template design tokens should shine through: drop theme overrides.
             $website->settings()->where('group', 'theme')->delete();
+
+            // Adopt the settings groups the template ships with (header, footer, ...).
+            foreach ($template->default_settings ?? [] as $group => $value) {
+                if (in_array($group, SettingController::GROUPS, true) && is_array($value)) {
+                    $website->settings()->updateOrCreate(['group' => $group], ['value' => $value]);
+                }
+            }
 
             // Scaffold in natural site order so the starter menu reads Home first.
             $order = ['home', 'about', 'services', 'products', 'team', 'portfolio', 'testimonials', 'blog', 'landing', 'contact'];
