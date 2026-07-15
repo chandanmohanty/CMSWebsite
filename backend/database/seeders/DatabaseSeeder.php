@@ -88,5 +88,7 @@ class DatabaseSeeder extends Seeder
                 ['block_type' => 'form_embed', 'default_content' => ['form_slug' => 'contact']],
             ]]
         );
+
+        $this->call(LegalTemplateSeeder::class);
     }
 }

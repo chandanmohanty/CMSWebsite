@@ -38,6 +38,7 @@ export default function AdminDashboard() {
             <h1 className="font-bold">CMS Admin</h1>
             <nav className="flex items-center gap-4 text-sm">
               <a href="/admin" className="font-medium text-slate-900">Websites</a>
+              <a href="/admin/templates" className="text-slate-500 hover:text-slate-900">Templates</a>
               <a href="/admin/media" className="text-slate-500 hover:text-slate-900">Media library</a>
               <a href="/admin/security" className="text-slate-500 hover:text-slate-900">Security</a>
             </nav>

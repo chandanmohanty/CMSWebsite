@@ -62,6 +62,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ---------- Websites (tenant-scoped via website.access) ----------
     Route::apiResource('websites', WebsiteController::class)->middleware('website.access');
     Route::post('websites/{website}/switch-template', [WebsiteController::class, 'switchTemplate'])->middleware('website.access');
+    Route::post('websites/{website}/apply-template', [WebsiteController::class, 'applyTemplate'])->middleware('website.access');
 
     Route::prefix('websites/{website}')->middleware('website.access')->group(function () {
         // Pages + builder
