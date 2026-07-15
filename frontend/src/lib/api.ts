@@ -1,6 +1,6 @@
 import type { PagePayload, SitePayload } from "./types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 // Which website this frontend instance renders. In production the deployment
 // resolves by domain; in development we pin a site by slug.
