@@ -76,7 +76,7 @@ Draft preview: the same endpoints accept `?preview=1` (bypasses cache, shows dra
 - AI API keys encrypted at rest (Laravel Crypt attribute cast).
 - `audit_logs` records logins, CRUD, publishes, rollbacks, template switches with IP.
 - Form submissions: schema-driven validation, honeypot spam protection, throttling.
-- 2FA columns are present on `users`; wiring the TOTP flow is a Phase-2 item.
+- Two-factor authentication (TOTP via pragmarx/google2fa): QR enrollment with confirmation, encrypted secrets, 8 single-use recovery codes, password-gated disable. Login for 2FA accounts returns a 5-minute encrypted challenge that `POST /auth/2fa/challenge` exchanges (code or recovery code) for the API token.
 
 ## Scalability
 
@@ -91,5 +91,5 @@ Draft preview: the same endpoints accept `?preview=1` (bypasses cache, shows dra
 3. Theme customizer UI over `website_settings.theme`.
 4. Form renderer component + email notifications/CRM webhooks on submission.
 5. XML sitemap + robots.txt endpoints (data already modeled).
-6. 2FA (TOTP), webhooks, GraphQL facade, plugin/module system.
+6. Webhooks, GraphQL facade, plugin/module system.
 7. Translations/multi-language content tables.

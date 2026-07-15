@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\TemplateController;
+use App\Http\Controllers\Api\TwoFactorController;
 use App\Http\Controllers\Api\WebsiteController;
 use App\Http\Controllers\Public\SiteController;
 use Illuminate\Support\Facades\Route;
@@ -28,10 +29,14 @@ Route::prefix('public')->middleware('throttle:240,1')->group(function () {
 
 // ---------- Auth ----------
 Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+Route::post('auth/2fa/challenge', [TwoFactorController::class, 'challenge'])->middleware('throttle:10,1');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
     Route::post('auth/logout', [AuthController::class, 'logout']);
+    Route::post('auth/2fa/enable', [TwoFactorController::class, 'enable']);
+    Route::post('auth/2fa/confirm', [TwoFactorController::class, 'confirm']);
+    Route::post('auth/2fa/disable', [TwoFactorController::class, 'disable']);
 
     // ---------- Templates (super admin) ----------
     // Note: the guard argument ('sanctum') is required - without it spatie's
