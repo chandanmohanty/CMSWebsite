@@ -4,6 +4,7 @@ import { BlockRenderer } from "@/components/blocks";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { fetchPage, fetchSite } from "@/lib/api";
+import { themeToCssVars, type ThemeSettings } from "@/lib/theme";
 
 type Props = { params: Promise<{ slug?: string[] }> };
 
@@ -53,15 +54,11 @@ export default async function SitePage({ params }: Props) {
 
   if (!data) notFound();
 
-  const tokens = site.template?.design_tokens ?? {};
-  const cssVars = {
-    "--color-primary": tokens.colors?.primary ?? "#0e7490",
-    "--color-secondary": tokens.colors?.secondary ?? "#0f172a",
-    "--color-accent": tokens.colors?.accent ?? "#22d3ee",
-  } as React.CSSProperties;
+  // Template design tokens + per-website theme customizer overrides.
+  const cssVars = themeToCssVars(site.template?.design_tokens, site.settings.theme as ThemeSettings | undefined) as React.CSSProperties;
 
   return (
-    <div style={cssVars}>
+    <div style={cssVars} className="themed">
       {data.page.custom_css && (
         // Escape any closing style tag so admin CSS cannot break out into markup context.
         <style dangerouslySetInnerHTML={{ __html: data.page.custom_css.replace(/<\/style/gi, "<\\/style") }} />

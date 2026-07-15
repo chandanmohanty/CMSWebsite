@@ -42,7 +42,7 @@ export function Header({ site }: { site: SitePayload }) {
           </ul>
         </nav>
         {cta?.label && (
-          <a href={cta.url ?? "#"} className="rounded-lg bg-[var(--color-primary,#0e7490)] px-4 py-2 text-sm font-semibold text-white">
+          <a href={cta.url ?? "#"} className="btn rounded-lg bg-[var(--color-primary,#0e7490)] px-4 py-2 text-sm font-semibold text-white">
             {cta.label}
           </a>
         )}

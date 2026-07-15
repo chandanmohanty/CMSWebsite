@@ -68,12 +68,15 @@ export default function AdminDashboard() {
                 {site.industry} · {site.pages_count} pages · {site.template?.name ?? "no template"}
               </p>
               {site.domain && <p className="mt-1 text-xs text-slate-400">{site.domain}</p>}
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 <a href={`/admin/websites/${site.id}/pages`} className="rounded-lg bg-cyan-50 px-3 py-1.5 text-sm font-semibold text-cyan-700 hover:bg-cyan-100">
                   Pages →
                 </a>
                 <a href={`/admin/websites/${site.id}/menus`} className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-600 hover:bg-slate-200">
                   Menus →
+                </a>
+                <a href={`/admin/websites/${site.id}/theme`} className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-600 hover:bg-slate-200">
+                  Theme →
                 </a>
               </div>
             </div>

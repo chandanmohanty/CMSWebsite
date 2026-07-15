@@ -32,7 +32,9 @@ class SettingController extends Controller
     {
         abort_unless(in_array($group, self::GROUPS), 404);
 
-        $data = $request->validate(['value' => ['required', 'array']]);
+        // `present` (not `required`): an empty object is a valid value - e.g. resetting
+        // the theme customizer back to template defaults.
+        $data = $request->validate(['value' => ['present', 'array']]);
 
         $setting = $website->settings()->updateOrCreate(['group' => $group], ['value' => $data['value']]);
         \Illuminate\Support\Facades\Cache::forget("site:{$website->id}");

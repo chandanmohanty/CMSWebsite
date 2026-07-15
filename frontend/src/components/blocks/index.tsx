@@ -31,7 +31,7 @@ function Hero({ content, settings }: BlockProps) {
         <h1 className={`font-bold tracking-tight ${compact ? "text-3xl" : "text-5xl"}`}>{str(content?.heading)}</h1>
         {str(content?.subheading) && <p className="mx-auto mt-4 max-w-2xl text-lg opacity-90">{str(content?.subheading)}</p>}
         {cta.label && (
-          <a href={cta.url ?? "#"} className="mt-8 inline-block rounded-lg bg-white px-6 py-3 font-semibold text-slate-900 hover:bg-slate-100">
+          <a href={cta.url ?? "#"} className="btn mt-8 inline-block rounded-lg bg-white px-6 py-3 font-semibold text-slate-900 hover:bg-slate-100">
             {cta.label}
           </a>
         )}
@@ -54,9 +54,9 @@ function ServicesGrid({ content }: BlockProps) {
       <h2 className="text-center text-3xl font-bold">{str(content?.heading)}</h2>
       <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {items(content?.items).map((item, i) => (
-          <div key={i} className="rounded-xl border border-slate-200 p-6 shadow-sm">
+          <div key={i} className="rounded-xl border border-[var(--color-border,#e2e8f0)] bg-[var(--color-surface,#ffffff)] p-6 shadow-sm">
             <h3 className="text-lg font-semibold">{item.title}</h3>
-            <p className="mt-2 text-slate-600">{item.text}</p>
+            <p className="mt-2 text-[var(--color-muted,#475569)]">{item.text}</p>
           </div>
         ))}
       </div>
@@ -73,7 +73,7 @@ function TeamGrid({ content }: BlockProps) {
           <div key={i} className="text-center">
             {member.image && <img src={member.image} alt={member.name ?? ""} className="mx-auto h-32 w-32 rounded-full object-cover" />}
             <h3 className="mt-4 font-semibold">{member.name}</h3>
-            <p className="text-sm text-slate-500">{member.role}</p>
+            <p className="text-sm text-[var(--color-muted,#64748b)]">{member.role}</p>
           </div>
         ))}
       </div>
@@ -83,13 +83,13 @@ function TeamGrid({ content }: BlockProps) {
 
 function Testimonials({ content }: BlockProps) {
   return (
-    <section className="bg-slate-50 py-20">
+    <section className="bg-[var(--color-surface-alt,#f8fafc)] py-20">
       <div className="mx-auto max-w-6xl px-6">
         <h2 className="text-center text-3xl font-bold">{str(content?.heading)}</h2>
         <div className="mt-12 grid gap-8 md:grid-cols-3">
           {items(content?.items).map((t, i) => (
-            <figure key={i} className="rounded-xl bg-white p-6 shadow-sm">
-              <blockquote className="text-slate-700">“{t.quote}”</blockquote>
+            <figure key={i} className="rounded-xl bg-[var(--color-surface,#ffffff)] p-6 shadow-sm">
+              <blockquote className="text-[var(--color-muted,#334155)]">“{t.quote}”</blockquote>
               <figcaption className="mt-4 font-semibold">{t.name}</figcaption>
             </figure>
           ))}
@@ -102,10 +102,10 @@ function Testimonials({ content }: BlockProps) {
 function CtaBanner({ content }: BlockProps) {
   const cta = (content?.cta ?? {}) as Cta;
   return (
-    <section className="bg-slate-900 py-16 text-center text-white">
+    <section className="bg-[var(--color-secondary,#0f172a)] py-16 text-center text-white">
       <h2 className="text-3xl font-bold">{str(content?.heading)}</h2>
       {cta.label && (
-        <a href={cta.url ?? "#"} className="mt-6 inline-block rounded-lg bg-[var(--color-accent,#22d3ee)] px-6 py-3 font-semibold text-slate-900">
+        <a href={cta.url ?? "#"} className="btn mt-6 inline-block rounded-lg bg-[var(--color-accent,#22d3ee)] px-6 py-3 font-semibold text-slate-900">
           {cta.label}
         </a>
       )}
@@ -119,11 +119,11 @@ function Faq({ content }: BlockProps) {
       <h2 className="text-center text-3xl font-bold">{str(content?.heading)}</h2>
       <div className="mt-10 space-y-3">
         {items(content?.items).map((faq, i) => (
-          <details key={i} className="group rounded-lg border border-slate-200 p-4">
+          <details key={i} className="group rounded-lg border border-[var(--color-border,#e2e8f0)] bg-[var(--color-surface,#ffffff)] p-4">
             <summary className="cursor-pointer list-none font-semibold marker:hidden">
               {(faq as { question?: string }).question}
             </summary>
-            <p className="mt-2 text-slate-600">{(faq as { answer?: string }).answer}</p>
+            <p className="mt-2 text-[var(--color-muted,#475569)]">{(faq as { answer?: string }).answer}</p>
           </details>
         ))}
       </div>
@@ -141,7 +141,7 @@ function Gallery({ content }: BlockProps) {
             {(img as { image?: string }).image && (
               <img src={(img as { image?: string }).image} alt={(img as { caption?: string }).caption ?? ""} className="h-56 w-full object-cover" />
             )}
-            {(img as { caption?: string }).caption && <figcaption className="mt-2 text-sm text-slate-500">{(img as { caption?: string }).caption}</figcaption>}
+            {(img as { caption?: string }).caption && <figcaption className="mt-2 text-sm text-[var(--color-muted,#64748b)]">{(img as { caption?: string }).caption}</figcaption>}
           </figure>
         ))}
       </div>
