@@ -113,6 +113,42 @@ function CtaBanner({ content }: BlockProps) {
   );
 }
 
+function Faq({ content }: BlockProps) {
+  return (
+    <section className="mx-auto max-w-3xl px-6 py-20">
+      <h2 className="text-center text-3xl font-bold">{str(content?.heading)}</h2>
+      <div className="mt-10 space-y-3">
+        {items(content?.items).map((faq, i) => (
+          <details key={i} className="group rounded-lg border border-slate-200 p-4">
+            <summary className="cursor-pointer list-none font-semibold marker:hidden">
+              {(faq as { question?: string }).question}
+            </summary>
+            <p className="mt-2 text-slate-600">{(faq as { answer?: string }).answer}</p>
+          </details>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Gallery({ content }: BlockProps) {
+  return (
+    <section className="mx-auto max-w-6xl px-6 py-20">
+      {str(content?.heading) && <h2 className="mb-10 text-center text-3xl font-bold">{str(content?.heading)}</h2>}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {items(content?.items).map((img, i) => (
+          <figure key={i} className="overflow-hidden rounded-xl">
+            {(img as { image?: string }).image && (
+              <img src={(img as { image?: string }).image} alt={(img as { caption?: string }).caption ?? ""} className="h-56 w-full object-cover" />
+            )}
+            {(img as { caption?: string }).caption && <figcaption className="mt-2 text-sm text-slate-500">{(img as { caption?: string }).caption}</figcaption>}
+          </figure>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function FormEmbed({ content }: BlockProps) {
   // Placeholder render; the interactive form component posts to /api/public/forms/{slug}/submit.
   return (
@@ -132,10 +168,19 @@ const BLOCKS: Record<string, (props: BlockProps) => JSX.Element> = {
   services_grid: ServicesGrid,
   team_grid: TeamGrid,
   testimonials: Testimonials,
+  faq: Faq,
+  gallery: Gallery,
   cta: CtaBanner,
   form_embed: FormEmbed,
   custom_html: CustomHtml,
 };
+
+/** Render a single section (used by the builder canvas for live previews). */
+export function BlockPreview({ blockType, content, settings }: { blockType: string; content: Record<string, unknown> | null; settings: Record<string, unknown> | null }) {
+  const Block = BLOCKS[blockType];
+  if (!Block) return <div className="p-8 text-center text-sm text-slate-400">Unknown block: {blockType}</div>;
+  return <Block content={content} settings={settings} />;
+}
 
 export function BlockRenderer({ sections }: { sections: Section[] }) {
   return (
