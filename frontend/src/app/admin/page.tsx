@@ -68,12 +68,14 @@ export default function AdminDashboard() {
                 {site.industry} · {site.pages_count} pages · {site.template?.name ?? "no template"}
               </p>
               {site.domain && <p className="mt-1 text-xs text-slate-400">{site.domain}</p>}
-              <a
-                href={`/admin/websites/${site.id}/pages`}
-                className="mt-3 inline-block rounded-lg bg-cyan-50 px-3 py-1.5 text-sm font-semibold text-cyan-700 hover:bg-cyan-100"
-              >
-                Manage pages →
-              </a>
+              <div className="mt-3 flex gap-2">
+                <a href={`/admin/websites/${site.id}/pages`} className="rounded-lg bg-cyan-50 px-3 py-1.5 text-sm font-semibold text-cyan-700 hover:bg-cyan-100">
+                  Pages →
+                </a>
+                <a href={`/admin/websites/${site.id}/menus`} className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-600 hover:bg-slate-200">
+                  Menus →
+                </a>
+              </div>
             </div>
           ))}
           {websites?.length === 0 && <p className="text-slate-500">No websites yet — create one via the API or upcoming builder UI.</p>}

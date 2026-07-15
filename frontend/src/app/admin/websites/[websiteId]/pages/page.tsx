@@ -76,6 +76,9 @@ export default function PagesList({ params }: { params: Promise<{ websiteId: str
             ← Websites
           </a>
           <h1 className="font-bold">Pages</h1>
+          <a href={`/admin/websites/${websiteId}/menus`} className="text-sm text-slate-500 hover:text-slate-900">
+            Menus
+          </a>
         </div>
       </header>
 
