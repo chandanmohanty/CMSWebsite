@@ -51,10 +51,13 @@ export const BLOCK_DEFS: BlockDef[] = [
     icon: "🏞️",
     description: "Large banner with heading and call to action",
     fields: [
+      { path: "badge", label: "Badge (small pill above heading)", type: "text" },
       { path: "heading", label: "Heading", type: "text" },
       { path: "subheading", label: "Subheading", type: "textarea" },
       { path: "image", label: "Background image", type: "image" },
       ...ctaFields(),
+      { path: "cta2.label", label: "Second button text", type: "text" },
+      { path: "cta2.url", label: "Second button link", type: "url" },
       {
         path: "settings.variant",
         label: "Style",
@@ -69,6 +72,55 @@ export const BLOCK_DEFS: BlockDef[] = [
     defaultSettings: { variant: "centered" },
   },
   {
+    type: "stats",
+    label: "Stats band",
+    icon: "📊",
+    description: "Glass number cards for trust stats",
+    fields: [],
+    repeater: {
+      path: "items",
+      label: "Stats",
+      itemLabel: "stat",
+      titleField: "label",
+      fields: [
+        { key: "value", label: "Number (e.g. 1,200+)", type: "text" },
+        { key: "label", label: "Label", type: "text" },
+      ],
+      newItem: { value: "100+", label: "New stat" },
+    },
+    defaultContent: { items: [
+      { value: "1,200+", label: "Verified professionals" },
+      { value: "25,000+", label: "Consultations completed" },
+      { value: "50+", label: "Cities covered" },
+    ] },
+  },
+  {
+    type: "two_panel",
+    label: "Two panels",
+    icon: "🪟",
+    description: "Two side-by-side cards with check-mark points",
+    fields: [
+      { path: "heading", label: "Heading", type: "text" },
+      { path: "subheading", label: "Subheading", type: "textarea" },
+    ],
+    repeater: {
+      path: "panels",
+      label: "Panels",
+      itemLabel: "panel",
+      titleField: "title",
+      fields: [
+        { key: "title", label: "Title", type: "text" },
+        { key: "text", label: "Text", type: "textarea" },
+        { key: "points", label: "Check points (one per line)", type: "textarea" },
+      ],
+      newItem: { title: "New panel", text: "", points: "" },
+    },
+    defaultContent: { heading: "How it works", panels: [
+      { title: "Step one", text: "", points: "First point\nSecond point" },
+      { title: "Step two", text: "", points: "First point\nSecond point" },
+    ] },
+  },
+  {
     type: "rich_text",
     label: "Rich text",
     icon: "📝",
@@ -81,17 +133,30 @@ export const BLOCK_DEFS: BlockDef[] = [
     label: "Services",
     icon: "🧩",
     description: "Grid of services or features",
-    fields: [{ path: "heading", label: "Heading", type: "text" }],
+    fields: [
+      { path: "heading", label: "Heading", type: "text" },
+      { path: "subheading", label: "Subheading", type: "textarea" },
+      {
+        path: "settings.variant",
+        label: "Style",
+        type: "select",
+        options: [
+          { value: "standard", label: "Light cards" },
+          { value: "glass", label: "Glass on dark gradient" },
+        ],
+      },
+    ],
     repeater: {
       path: "items",
       label: "Services",
       itemLabel: "service",
       titleField: "title",
       fields: [
+        { key: "icon", label: "Icon (emoji)", type: "text" },
         { key: "title", label: "Title", type: "text" },
         { key: "text", label: "Description", type: "textarea" },
       ],
-      newItem: { title: "New service", text: "" },
+      newItem: { icon: "", title: "New service", text: "" },
     },
     defaultContent: { heading: "Our services", items: [{ title: "Service one", text: "Describe it briefly." }] },
   },
@@ -176,8 +241,12 @@ export const BLOCK_DEFS: BlockDef[] = [
     type: "cta",
     label: "Call to action",
     icon: "📣",
-    description: "Banner with a single action button",
-    fields: [{ path: "heading", label: "Heading", type: "text" }, ...ctaFields()],
+    description: "Glass banner with a single action button",
+    fields: [
+      { path: "heading", label: "Heading", type: "text" },
+      { path: "subheading", label: "Subheading", type: "textarea" },
+      ...ctaFields(),
+    ],
     defaultContent: { heading: "Ready to get started?", cta: { label: "Contact us", url: "/contact" } },
   },
   {

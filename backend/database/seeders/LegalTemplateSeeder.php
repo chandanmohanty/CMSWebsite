@@ -45,31 +45,46 @@ class LegalTemplateSeeder extends Seeder
         $layouts = [
             ['page_type' => 'home', 'name' => 'Home', 'structure' => [
                 ['block_type' => 'hero', 'default_settings' => ['variant' => 'centered'], 'default_content' => [
+                    'badge' => 'Trusted legal help, online & in person',
                     'heading' => 'Clear legal help, when you need it most',
                     'subheading' => 'Talk to an experienced advocate today — confidential guidance for civil, criminal, family and business matters.',
-                    'cta' => ['label' => 'Book a consultation', 'url' => '/contact'],
+                    'cta' => ['label' => 'Talk to a Lawyer', 'url' => '/contact'],
+                    'cta2' => ['label' => 'Explore services', 'url' => '/services'],
                 ]],
-                ['block_type' => 'services_grid', 'default_content' => [
-                    'heading' => 'Why clients choose us',
+                ['block_type' => 'stats', 'default_content' => [
                     'items' => [
-                        ['title' => '100% Confidential', 'text' => 'Every consultation is private and protected. Discuss your matter freely and safely.'],
-                        ['title' => 'Easy to Reach', 'text' => 'Start online from anywhere, then meet in person when your case needs it.'],
-                        ['title' => 'Fair, Fixed Fees', 'text' => 'Transparent pricing agreed up front — no surprises, no hidden charges.'],
+                        ['value' => '1,200+', 'label' => 'Verified advocates'],
+                        ['value' => '25,000+', 'label' => 'Consultations completed'],
+                        ['value' => '50+', 'label' => 'Cities served'],
+                    ],
+                ]],
+                ['block_type' => 'services_grid', 'default_settings' => ['variant' => 'glass'], 'default_content' => [
+                    'heading' => 'Why clients choose us',
+                    'subheading' => 'Legal help designed around you — private, reachable and honestly priced.',
+                    'items' => [
+                        ['icon' => '🔒', 'title' => '100% Confidential', 'text' => 'Every consultation is private and protected. Discuss your matter freely and safely.'],
+                        ['icon' => '📱', 'title' => 'Easy to Reach', 'text' => 'Start online from anywhere, then meet in person when your case needs it.'],
+                        ['icon' => '💰', 'title' => 'Fair, Fixed Fees', 'text' => 'Transparent pricing agreed up front — no surprises, no hidden charges.'],
+                    ],
+                ]],
+                ['block_type' => 'two_panel', 'default_content' => [
+                    'heading' => 'Start online, finish strong',
+                    'subheading' => 'A hybrid way of working that keeps you safe, informed and represented.',
+                    'panels' => [
+                        ['title' => 'Start safe — online', 'text' => 'Get clarity before you commit.', 'points' => "Confidential consultation from home\nDocument review and honest first opinion\nClear fee quote before any work begins"],
+                        ['title' => 'Move strong — in person', 'text' => 'When your matter goes to court, we are there.', 'points' => "Experienced advocates at every hearing\nRegular updates in plain language\nOne team from filing to final order"],
                     ],
                 ]],
                 ['block_type' => 'services_grid', 'default_content' => [
                     'heading' => 'Our practice areas',
                     'items' => [
-                        ['title' => 'Criminal Defence', 'text' => 'Bail, trials and appeals handled with urgency and discretion.'],
-                        ['title' => 'Civil Litigation', 'text' => 'Recovery suits, injunctions and dispute resolution in all courts.'],
-                        ['title' => 'Family Law', 'text' => 'Divorce, maintenance, custody and settlements handled with care.'],
-                        ['title' => 'Property Disputes', 'text' => 'Title verification, partition suits and tenancy matters.'],
-                        ['title' => 'Corporate & Startups', 'text' => 'Contracts, compliance and advisory for growing businesses.'],
-                        ['title' => 'Consumer Protection', 'text' => 'Claims against unfair trade practices and deficient services.'],
+                        ['icon' => '⚖️', 'title' => 'Criminal Defence', 'text' => 'Bail, trials and appeals handled with urgency and discretion.'],
+                        ['icon' => '🏛️', 'title' => 'Civil Litigation', 'text' => 'Recovery suits, injunctions and dispute resolution in all courts.'],
+                        ['icon' => '👪', 'title' => 'Family Law', 'text' => 'Divorce, maintenance, custody and settlements handled with care.'],
+                        ['icon' => '🏠', 'title' => 'Property Disputes', 'text' => 'Title verification, partition suits and tenancy matters.'],
+                        ['icon' => '🏢', 'title' => 'Corporate & Startups', 'text' => 'Contracts, compliance and advisory for growing businesses.'],
+                        ['icon' => '🛡️', 'title' => 'Consumer Protection', 'text' => 'Claims against unfair trade practices and deficient services.'],
                     ],
-                ]],
-                ['block_type' => 'rich_text', 'default_content' => [
-                    'html' => '<h2>How it works</h2><p><strong>1. Tell us about your matter.</strong> Share the basics through our consultation form — it takes two minutes.</p><p><strong>2. Talk to an advocate.</strong> We match you with a lawyer experienced in your type of case for a confidential first consultation.</p><p><strong>3. Move forward with a plan.</strong> Get clear next steps, honest timelines and a fixed fee before any work begins.</p>',
                 ]],
                 ['block_type' => 'testimonials', 'default_content' => [
                     'heading' => 'What our clients say',
@@ -90,7 +105,8 @@ class LegalTemplateSeeder extends Seeder
                 ]],
                 ['block_type' => 'cta', 'default_content' => [
                     'heading' => 'Need legal help right now?',
-                    'cta' => ['label' => 'Talk to an advocate', 'url' => '/contact'],
+                    'subheading' => 'Tell us about your matter and get a confidential first consultation within one working day.',
+                    'cta' => ['label' => 'Talk to a Lawyer', 'url' => '/contact'],
                 ]],
             ]],
 
