@@ -1,6 +1,8 @@
 "use client";
 
+import { useMemo } from "react";
 import { PageBuilder, newUid, type BuilderSection } from "@/components/builder/PageBuilder";
+import { createMockMediaApi } from "@/lib/media-mock";
 
 /**
  * Standalone builder playground with sample content - works without the
@@ -57,12 +59,15 @@ const demoSections: BuilderSection[] = [
 ];
 
 export default function BuilderDemo() {
+  const mediaApi = useMemo(createMockMediaApi, []);
+
   return (
     <PageBuilder
       pageTitle="Builder demo (not persisted)"
       pageStatus="draft"
       initialSections={demoSections}
       backHref="/admin"
+      mediaApi={mediaApi}
       onSave={async () => {
         await new Promise((r) => setTimeout(r, 400)); // simulate a request
       }}

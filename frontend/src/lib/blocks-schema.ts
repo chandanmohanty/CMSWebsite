@@ -53,6 +53,7 @@ export const BLOCK_DEFS: BlockDef[] = [
     fields: [
       { path: "heading", label: "Heading", type: "text" },
       { path: "subheading", label: "Subheading", type: "textarea" },
+      { path: "image", label: "Background image", type: "image" },
       ...ctaFields(),
       {
         path: "settings.variant",

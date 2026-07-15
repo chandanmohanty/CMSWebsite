@@ -14,6 +14,8 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { BLOCK_DEFS, blockDef } from "@/lib/blocks-schema";
+import type { MediaApi } from "@/lib/media-api";
+import { MediaPickerDialog } from "@/components/media/MediaPickerDialog";
 import { Palette, PALETTE_PREFIX } from "./Palette";
 import { CanvasSection } from "./CanvasSection";
 import { Inspector } from "./Inspector";
@@ -37,6 +39,8 @@ export interface PageBuilderProps {
   /** Optional: publish after save. */
   onPublish?: () => Promise<void>;
   backHref?: string;
+  /** When provided, inspector image fields can browse the media library. */
+  mediaApi?: MediaApi;
 }
 
 const DEVICE_WIDTHS = { desktop: "100%", tablet: "768px", mobile: "390px" } as const;
@@ -45,7 +49,7 @@ type Device = keyof typeof DEVICE_WIDTHS;
 let uidCounter = 0;
 export const newUid = () => `s${Date.now().toString(36)}_${uidCounter++}`;
 
-export function PageBuilder({ pageTitle, pageStatus, initialSections, onSave, onPublish, backHref }: PageBuilderProps) {
+export function PageBuilder({ pageTitle, pageStatus, initialSections, onSave, onPublish, backHref, mediaApi }: PageBuilderProps) {
   const [sections, setSectionsRaw] = useState<BuilderSection[]>(initialSections);
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
   const [device, setDevice] = useState<Device>("desktop");
@@ -53,6 +57,8 @@ export function PageBuilder({ pageTitle, pageStatus, initialSections, onSave, on
   const [saving, setSaving] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [activeDragUid, setActiveDragUid] = useState<string | null>(null);
+  // Media picker: holds the setter of whichever image field opened it.
+  const [pickerAssign, setPickerAssign] = useState<((url: string) => void) | null>(null);
 
   // --- Undo / redo (bounded history of section states) ---
   // IMPORTANT: history bookkeeping must stay OUTSIDE React state updaters -
@@ -369,6 +375,7 @@ export function PageBuilder({ pageTitle, pageStatus, initialSections, onSave, on
                 section={selected}
                 onChange={(patch) => updateSection(selected.uid, patch)}
                 onClose={() => setSelectedUid(null)}
+                onBrowseImage={mediaApi ? (assign) => setPickerAssign(() => assign) : undefined}
               />
             ) : (
               <div className="p-6 text-sm text-slate-400">
@@ -392,6 +399,17 @@ export function PageBuilder({ pageTitle, pageStatus, initialSections, onSave, on
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      {mediaApi && pickerAssign && (
+        <MediaPickerDialog
+          api={mediaApi}
+          onClose={() => setPickerAssign(null)}
+          onPick={(item) => {
+            pickerAssign(item.url);
+            setPickerAssign(null);
+          }}
+        />
+      )}
     </div>
   );
 }

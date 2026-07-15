@@ -8,12 +8,49 @@ interface Props {
   section: BuilderSection;
   onChange: (patch: Partial<BuilderSection>) => void;
   onClose: () => void;
+  /** When provided, image fields get a "Browse" button that opens the media picker. */
+  onBrowseImage?: (assign: (url: string) => void) => void;
 }
 
 const inputClass =
   "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500";
 
-export function Inspector({ section, onChange, onClose }: Props) {
+/** URL input + thumbnail + optional media-library browse button. */
+function ImageInput({
+  value,
+  placeholder,
+  onChange,
+  onBrowse,
+}: {
+  value: string;
+  placeholder?: string;
+  onChange: (v: string) => void;
+  onBrowse?: (assign: (url: string) => void) => void;
+}) {
+  return (
+    <div>
+      <div className="flex gap-1.5">
+        <input className={inputClass} value={value} placeholder={placeholder ?? "https://… or pick from library"} onChange={(e) => onChange(e.target.value)} />
+        {onBrowse && (
+          <button
+            type="button"
+            onClick={() => onBrowse(onChange)}
+            className="shrink-0 rounded-lg border border-slate-300 px-2.5 text-sm hover:border-cyan-400 hover:bg-cyan-50"
+            title="Choose from media library"
+          >
+            📁
+          </button>
+        )}
+      </div>
+      {value && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={value} alt="" className="mt-2 h-20 w-full rounded-lg border border-slate-200 object-cover" />
+      )}
+    </div>
+  );
+}
+
+export function Inspector({ section, onChange, onClose, onBrowseImage }: Props) {
   const def = blockDef(section.block_type);
   const [openItem, setOpenItem] = useState<number | null>(null);
 
@@ -95,18 +132,16 @@ export function Inspector({ section, onChange, onClose }: Props) {
                   </option>
                 ))}
               </select>
+            ) : field.type === "image" ? (
+              <ImageInput value={readField(field)} placeholder={field.placeholder} onChange={(v) => writeField(field, v)} onBrowse={onBrowseImage} />
             ) : (
               <input
-                type={field.type === "url" ? "text" : "text"}
+                type="text"
                 className={inputClass}
                 value={readField(field)}
                 placeholder={field.placeholder}
                 onChange={(e) => writeField(field, e.target.value)}
               />
-            )}
-            {field.type === "image" && readField(field) && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={readField(field)} alt="" className="mt-2 h-20 w-full rounded-lg border border-slate-200 object-cover" />
             )}
           </label>
         ))}
@@ -145,6 +180,8 @@ export function Inspector({ section, onChange, onClose }: Props) {
                           <span className="mb-1 block text-xs font-semibold text-slate-600">{f.label}</span>
                           {f.type === "textarea" ? (
                             <textarea rows={3} className={inputClass} value={item[f.key] ?? ""} placeholder={f.placeholder} onChange={(e) => updateItem(i, f.key, e.target.value)} />
+                          ) : f.type === "image" ? (
+                            <ImageInput value={item[f.key] ?? ""} placeholder={f.placeholder} onChange={(v) => updateItem(i, f.key, v)} onBrowse={onBrowseImage} />
                           ) : (
                             <input className={inputClass} value={item[f.key] ?? ""} placeholder={f.placeholder} onChange={(e) => updateItem(i, f.key, e.target.value)} />
                           )}

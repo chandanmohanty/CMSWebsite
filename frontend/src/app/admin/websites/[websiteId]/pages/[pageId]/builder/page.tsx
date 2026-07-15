@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminFetch } from "@/lib/api";
+import { realMediaApi } from "@/lib/media-api";
 import { PageBuilder, newUid, type BuilderSection } from "@/components/builder/PageBuilder";
 
 interface ApiSection {
@@ -68,6 +69,7 @@ export default function BuilderPage({ params }: { params: Promise<{ websiteId: s
       pageStatus={page.status}
       initialSections={initialSections}
       backHref={`/admin/websites/${websiteId}/pages`}
+      mediaApi={realMediaApi}
       onSave={async (sections) => {
         await adminFetch(`websites/${websiteId}/pages/${pageId}/sections`, {
           method: "PUT",

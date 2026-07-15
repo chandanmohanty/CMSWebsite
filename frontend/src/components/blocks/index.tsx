@@ -26,9 +26,14 @@ const items = (v: unknown): Item[] => (Array.isArray(v) ? (v as Item[]) : []);
 function Hero({ content, settings }: BlockProps) {
   const cta = (content?.cta ?? {}) as Cta;
   const compact = settings?.variant === "compact";
+  const image = str(content?.image);
   return (
-    <section className={`bg-[var(--color-primary,#0e7490)] text-white ${compact ? "py-16" : "py-28"}`}>
-      <div className="mx-auto max-w-5xl px-6 text-center">
+    <section
+      className={`relative bg-[var(--color-primary,#0e7490)] bg-cover bg-center text-white ${compact ? "py-16" : "py-28"}`}
+      style={image ? { backgroundImage: `url(${image})` } : undefined}
+    >
+      {image && <div className="absolute inset-0 bg-slate-900/50" aria-hidden />}
+      <div className="relative mx-auto max-w-5xl px-6 text-center">
         <h1 className={`font-bold tracking-tight ${compact ? "text-3xl" : "text-5xl"}`}>{str(content?.heading)}</h1>
         {str(content?.subheading) && <p className="mx-auto mt-4 max-w-2xl text-lg opacity-90">{str(content?.subheading)}</p>}
         {cta.label && (
