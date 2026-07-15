@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { blockDef, getAtPath, setAtPath, type FieldDef } from "@/lib/blocks-schema";
+import type { AiTextApi } from "@/lib/ai-api";
+import { AiFieldButton } from "./AiFieldButton";
 import type { BuilderSection } from "./PageBuilder";
 
 interface Props {
@@ -10,6 +12,8 @@ interface Props {
   onClose: () => void;
   /** When provided, image fields get a "Browse" button that opens the media picker. */
   onBrowseImage?: (assign: (url: string) => void) => void;
+  /** When provided, text fields get the ✨ AI assist button. */
+  aiApi?: AiTextApi;
 }
 
 const inputClass =
@@ -50,7 +54,7 @@ function ImageInput({
   );
 }
 
-export function Inspector({ section, onChange, onClose, onBrowseImage }: Props) {
+export function Inspector({ section, onChange, onClose, onBrowseImage, aiApi }: Props) {
   const def = blockDef(section.block_type);
   const [openItem, setOpenItem] = useState<number | null>(null);
 
@@ -121,7 +125,12 @@ export function Inspector({ section, onChange, onClose, onBrowseImage }: Props) 
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
         {def.fields.map((field) => (
           <label key={field.path} className="block">
-            <span className="mb-1 block text-xs font-semibold text-slate-600">{field.label}</span>
+            <span className="mb-1 flex items-center justify-between text-xs font-semibold text-slate-600">
+              {field.label}
+              {aiApi && (field.type === "text" || field.type === "textarea") && (
+                <AiFieldButton api={aiApi} value={readField(field)} fieldLabel={field.label} blockLabel={def.label} onResult={(text) => writeField(field, text)} />
+              )}
+            </span>
             {field.type === "textarea" ? (
               <textarea rows={5} className={inputClass} value={readField(field)} placeholder={field.placeholder} onChange={(e) => writeField(field, e.target.value)} />
             ) : field.type === "select" ? (
@@ -177,7 +186,18 @@ export function Inspector({ section, onChange, onClose, onBrowseImage }: Props) 
                     <div className="space-y-3 border-t border-slate-100 p-3">
                       {repeater.fields.map((f) => (
                         <label key={f.key} className="block">
-                          <span className="mb-1 block text-xs font-semibold text-slate-600">{f.label}</span>
+                          <span className="mb-1 flex items-center justify-between text-xs font-semibold text-slate-600">
+                            {f.label}
+                            {aiApi && (f.type === "text" || f.type === "textarea") && (
+                              <AiFieldButton
+                                api={aiApi}
+                                value={item[f.key] ?? ""}
+                                fieldLabel={f.label}
+                                blockLabel={`${def.label} ${repeater.itemLabel}`}
+                                onResult={(text) => updateItem(i, f.key, text)}
+                              />
+                            )}
+                          </span>
                           {f.type === "textarea" ? (
                             <textarea rows={3} className={inputClass} value={item[f.key] ?? ""} placeholder={f.placeholder} onChange={(e) => updateItem(i, f.key, e.target.value)} />
                           ) : f.type === "image" ? (

@@ -2,7 +2,19 @@
 
 import { useMemo } from "react";
 import { PageBuilder, newUid, type BuilderSection } from "@/components/builder/PageBuilder";
+import type { AiTextApi } from "@/lib/ai-api";
 import { createMockMediaApi } from "@/lib/media-mock";
+
+/** Canned AI responses so the ✨ button is fully usable without the backend. */
+const mockAiApi: AiTextApi = {
+  async generateText(task, input) {
+    await new Promise((r) => setTimeout(r, 700));
+    if (task === "rewrite") return `${input.replace(/\.$/, "")} — reimagined with clearer, more compelling language.`;
+    if (task === "improve_grammar") return input.trim().replace(/\s+/g, " ");
+    const brief = (input.match(/Brief: (.*)/)?.[1] ?? "your topic").trim();
+    return `Experience the difference: ${brief} — crafted to win your visitors over.`;
+  },
+};
 
 /**
  * Standalone builder playground with sample content - works without the
@@ -68,6 +80,7 @@ export default function BuilderDemo() {
       initialSections={demoSections}
       backHref="/admin"
       mediaApi={mediaApi}
+      aiApi={mockAiApi}
       onSave={async () => {
         await new Promise((r) => setTimeout(r, 400)); // simulate a request
       }}

@@ -1,8 +1,9 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminFetch } from "@/lib/api";
+import { realAiApi } from "@/lib/ai-api";
 import { realMediaApi } from "@/lib/media-api";
 import { PageBuilder, newUid, type BuilderSection } from "@/components/builder/PageBuilder";
 
@@ -27,6 +28,7 @@ export default function BuilderPage({ params }: { params: Promise<{ websiteId: s
   const router = useRouter();
   const [page, setPage] = useState<ApiPage | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const aiApi = useMemo(() => realAiApi(websiteId), [websiteId]);
 
   useEffect(() => {
     if (!localStorage.getItem("cms_token")) {
@@ -70,6 +72,7 @@ export default function BuilderPage({ params }: { params: Promise<{ websiteId: s
       initialSections={initialSections}
       backHref={`/admin/websites/${websiteId}/pages`}
       mediaApi={realMediaApi}
+      aiApi={aiApi}
       onSave={async (sections) => {
         await adminFetch(`websites/${websiteId}/pages/${pageId}/sections`, {
           method: "PUT",

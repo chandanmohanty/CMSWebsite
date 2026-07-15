@@ -14,6 +14,7 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { BLOCK_DEFS, blockDef } from "@/lib/blocks-schema";
+import type { AiTextApi } from "@/lib/ai-api";
 import type { MediaApi } from "@/lib/media-api";
 import { MediaPickerDialog } from "@/components/media/MediaPickerDialog";
 import { Palette, PALETTE_PREFIX } from "./Palette";
@@ -41,6 +42,8 @@ export interface PageBuilderProps {
   backHref?: string;
   /** When provided, inspector image fields can browse the media library. */
   mediaApi?: MediaApi;
+  /** When provided, inspector text fields get the ✨ AI assist button. */
+  aiApi?: AiTextApi;
 }
 
 const DEVICE_WIDTHS = { desktop: "100%", tablet: "768px", mobile: "390px" } as const;
@@ -49,7 +52,7 @@ type Device = keyof typeof DEVICE_WIDTHS;
 let uidCounter = 0;
 export const newUid = () => `s${Date.now().toString(36)}_${uidCounter++}`;
 
-export function PageBuilder({ pageTitle, pageStatus, initialSections, onSave, onPublish, backHref, mediaApi }: PageBuilderProps) {
+export function PageBuilder({ pageTitle, pageStatus, initialSections, onSave, onPublish, backHref, mediaApi, aiApi }: PageBuilderProps) {
   const [sections, setSectionsRaw] = useState<BuilderSection[]>(initialSections);
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
   const [device, setDevice] = useState<Device>("desktop");
@@ -376,6 +379,7 @@ export function PageBuilder({ pageTitle, pageStatus, initialSections, onSave, on
                 onChange={(patch) => updateSection(selected.uid, patch)}
                 onClose={() => setSelectedUid(null)}
                 onBrowseImage={mediaApi ? (assign) => setPickerAssign(() => assign) : undefined}
+                aiApi={aiApi}
               />
             ) : (
               <div className="p-6 text-sm text-slate-400">
