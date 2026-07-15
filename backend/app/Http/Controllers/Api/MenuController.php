@@ -36,13 +36,17 @@ class MenuController extends Controller
     {
         abort_unless($menu->website_id === $website->id, 404);
 
-        $data = $request->validate([
+        $request->validate([
             'items' => ['required', 'array'],
             'items.*.label' => ['required', 'string', 'max:255'],
         ]);
 
+        // validate() strips item keys without explicit rules (page_id, url,
+        // children, ...) - use the full input now that the shape is validated.
+        $items = $request->input('items');
+
         // Internal links may only point at this website's pages (cross-tenant reference guard).
-        $pageIds = $this->collectPageIds($data['items']);
+        $pageIds = $this->collectPageIds($items);
         if ($pageIds) {
             $validCount = Page::where('website_id', $website->id)->whereIn('id', $pageIds)->count();
             if ($validCount !== count($pageIds)) {
@@ -50,9 +54,9 @@ class MenuController extends Controller
             }
         }
 
-        DB::transaction(function () use ($menu, $data) {
+        DB::transaction(function () use ($menu, $items) {
             $menu->allItems()->delete();
-            $this->createItems($menu->id, $data['items'], null);
+            $this->createItems($menu->id, $items, null);
         });
 
         Cache::forget("site:{$website->id}");

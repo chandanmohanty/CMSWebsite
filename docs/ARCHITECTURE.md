@@ -5,8 +5,8 @@
 | Layer | Technology |
 |---|---|
 | Frontend (public sites + admin) | Next.js 16 (App Router, TypeScript, Tailwind 4) |
-| Backend API | Laravel 11 (PHP 8.2+, Sanctum, spatie/laravel-permission) |
-| Database | MySQL 8 |
+| Backend API | Laravel 12 (PHP 8.2+, Sanctum, spatie/laravel-permission) |
+| Database | MySQL 8 (SQLite supported for local development) |
 | Media processing | Intervention Image (compression, thumbnails) |
 | AI | Pluggable driver layer: OpenAI, Anthropic, Gemini, any OpenAI-compatible custom LLM |
 

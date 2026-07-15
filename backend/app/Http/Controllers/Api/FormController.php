@@ -29,6 +29,9 @@ class FormController extends Controller
             'spam_protection' => ['sometimes', 'boolean'],
         ]);
 
+        // validate() strips schema keys without explicit rules (submit_label,
+        // success_message, ...) - keep the full validated-shape schema from input.
+        $data['schema'] = $request->input('schema');
         $data['website_id'] = $website->id;
         $data['slug'] = Str::slug($data['name']);
 

@@ -61,7 +61,7 @@ return new class extends Migration
         });
 
         // Which users may manage which websites (RBAC roles come from spatie/laravel-permission).
-        Schema::create('website_user', function (Blueprint $table) {
+        Schema::create('user_website', function (Blueprint $table) {
             $table->id();
             $table->foreignId('website_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
@@ -72,10 +72,11 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('website_user');
+        Schema::dropIfExists('user_website');
         Schema::dropIfExists('website_settings');
         Schema::dropIfExists('websites');
         Schema::dropIfExists('template_layouts');
         Schema::dropIfExists('templates');
     }
 };
+

@@ -23,5 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // API routes always render JSON errors - never redirects to a login page,
+        // even when a client forgets the Accept: application/json header.
+        $exceptions->shouldRenderJsonWhen(fn ($request) => $request->is('api/*') || $request->expectsJson());
     })->create();

@@ -25,9 +25,15 @@ class MenuItem extends Model
         return $this->belongsTo(Page::class);
     }
 
-    /** Final href: internal page link wins over raw URL. */
+    /** Final href: internal page link wins over raw URL. The home page lives at the site root. */
     public function resolvedUrl(): string
     {
-        return $this->page ? '/'.ltrim($this->page->slug, '/') : ($this->url ?? '#');
+        if ($this->page) {
+            return $this->page->page_type === 'home' || $this->page->slug === ''
+                ? '/'
+                : '/'.ltrim($this->page->slug, '/');
+        }
+
+        return $this->url ?? '#';
     }
 }

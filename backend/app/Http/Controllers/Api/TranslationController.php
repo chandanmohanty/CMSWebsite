@@ -105,6 +105,9 @@ class TranslationController extends Controller
         });
 
         Cache::forget("page:{$website->id}:{$page->slug}:{$locale}");
+        if ($page->page_type === 'home' || $page->slug === '') {
+            Cache::forget("page:{$website->id}::{$locale}"); // the home page also serves the root path
+        }
         AuditLog::record('translation_updated', $page, ['locale' => $locale], $website->id);
 
         return response()->json(['message' => 'Translation saved.']);

@@ -15,13 +15,24 @@ use Illuminate\Validation\ValidationException;
 
 class PageController extends Controller
 {
-    /** Bust the public renderer cache for a page path - the default and every locale variant. */
-    private function forgetPageCache(Website $website, string $slug): void
+    /**
+     * Bust the public renderer cache for a page - every path it is reachable at
+     * (the home page also serves the root path ''), in every locale variant.
+     */
+    private function forgetPageCache(Website $website, Page $page, ?string $previousSlug = null): void
     {
-        Cache::forget("page:{$website->id}:{$slug}:");
+        $paths = array_unique(array_filter([
+            $page->slug,
+            $previousSlug,
+            $page->page_type === 'home' || $page->slug === '' ? '' : null,
+        ], fn ($path) => $path !== null));
 
-        foreach ($website->locales ?? [] as $locale) {
-            Cache::forget("page:{$website->id}:{$slug}:{$locale}");
+        foreach ($paths as $path) {
+            Cache::forget("page:{$website->id}:{$path}:");
+
+            foreach ($website->locales ?? [] as $locale) {
+                Cache::forget("page:{$website->id}:{$path}:{$locale}");
+            }
         }
     }
 
@@ -118,8 +129,7 @@ class PageController extends Controller
 
         $originalSlug = $page->slug;
         $page->update(collect($data)->except('seo')->all());
-        $this->forgetPageCache($website, $originalSlug);
-        $this->forgetPageCache($website, $page->slug);
+        $this->forgetPageCache($website, $page, $originalSlug);
 
         if (isset($data['seo'])) {
             $page->seo()->updateOrCreate([], collect($data['seo'])->only([
@@ -167,7 +177,7 @@ class PageController extends Controller
             }
         });
 
-        $this->forgetPageCache($website, $page->slug);
+        $this->forgetPageCache($website, $page);
 
         return $page->load('sections');
     }
@@ -179,7 +189,7 @@ class PageController extends Controller
 
         $page->snapshot($request->user()->id, 'publish');
         $page->update(['status' => 'published', 'published_at' => now()]);
-        $this->forgetPageCache($website, $page->slug);
+        $this->forgetPageCache($website, $page);
 
         AuditLog::record('published', $page, null, $website->id);
 
@@ -190,7 +200,7 @@ class PageController extends Controller
     {
         abort_unless($page->website_id === $website->id, 404);
         $page->update(['status' => 'draft']);
-        $this->forgetPageCache($website, $page->slug);
+        $this->forgetPageCache($website, $page);
 
         return $page;
     }
@@ -218,7 +228,7 @@ class PageController extends Controller
             }
         });
 
-        $this->forgetPageCache($website, $page->slug);
+        $this->forgetPageCache($website, $page);
         AuditLog::record('rolled_back', $page, ['revision_id' => $revision->id], $website->id);
 
         return $page->load('sections');
@@ -228,9 +238,10 @@ class PageController extends Controller
     {
         abort_unless($page->website_id === $website->id, 404);
         AuditLog::record('deleted', $page, null, $website->id);
-        $this->forgetPageCache($website, $page->slug);
+        $this->forgetPageCache($website, $page);
         $page->delete();
 
         return response()->noContent();
     }
 }
+

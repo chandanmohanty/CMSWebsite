@@ -2,7 +2,7 @@
 
 Enterprise CMS that manages many websites (healthcare, real estate, law, travel, corporate, IT, education, manufacturing, finance, restaurants, …) from one platform, with industry templates, a block-based page builder, a centralized media library, and multi-provider AI content/image generation.
 
-**Stack:** Next.js 16 (frontend) · Laravel 11 API (backend) · MySQL 8
+**Stack:** Next.js 16 (frontend) · Laravel 12 API (backend) · MySQL 8 (SQLite works for local dev)
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full design.
 
@@ -29,14 +29,17 @@ Easiest on Windows: install [Laragon](https://laragon.org/) (bundles PHP + MySQL
 cd backend
 composer install
 copy .env.example .env          # then set DB_* credentials
+                                # (or DB_CONNECTION=sqlite + create database/database.sqlite for local dev)
 php artisan key:generate
 
-# Publish the spatie permission migration & config (one time)
+# Publish package migrations & config (one time)
 php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
+php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
 
 php artisan migrate --seed      # schema + roles + super admin + demo healthcare template
 php artisan storage:link        # expose the media library
-php artisan serve               # http://localhost:8000
+php artisan serve               # http://localhost:8000 (use --port if 8000 is taken,
+                                # and match NEXT_PUBLIC_API_URL in frontend/.env.local)
 ```
 
 Seeded super admin: `admin@example.com` / `ChangeMe123!` — **change this immediately.**

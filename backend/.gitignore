@@ -1,6 +1,8 @@
 /vendor
 /node_modules
 /.env
+/database/database.sqlite
+composer.phar
 /.env.backup
 /.phpunit.cache
 /storage/*.key

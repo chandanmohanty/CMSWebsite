@@ -190,8 +190,10 @@ class SiteController extends Controller
                 if (str_contains(strtolower($page->seo->robots ?? ''), 'noindex')) {
                     continue;
                 }
+                // The home page is canonically served at the site root.
+                $path = ($page->page_type === 'home' || $page->slug === '') ? '' : ltrim($page->slug, '/');
                 $urls[] = [
-                    'loc' => $base.'/'.ltrim($page->slug, '/'),
+                    'loc' => $path ? $base.'/'.$path : $base,
                     'lastmod' => $page->updated_at?->toAtomString(),
                 ];
             }
