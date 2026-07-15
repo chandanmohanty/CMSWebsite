@@ -87,15 +87,18 @@ export function Header({ site, currentLocale = "", currentPath = "" }: { site: S
   const header = site.settings.header ?? {};
   const menu = site.menus.header_primary ?? [];
   const logo = header.logo_url as string | undefined;
-  const cta = header.cta as { label?: string; url?: string } | undefined;
-  const secondaryCta = header.secondary_cta as { label?: string; url?: string } | undefined;
+  // enabled: false hides a button while keeping its saved label/link.
+  const rawCta = header.cta as { label?: string; url?: string; enabled?: boolean } | undefined;
+  const rawSecondary = header.secondary_cta as { label?: string; url?: string; enabled?: boolean } | undefined;
+  const cta = rawCta?.label && rawCta.enabled !== false ? rawCta : undefined;
+  const secondaryCta = rawSecondary?.label && rawSecondary.enabled !== false ? rawSecondary : undefined;
   const sticky = header.sticky !== false;
   const s = STYLES[header.style === "dark" ? "dark" : "light"];
 
   const defaultLocale = site.website.default_locale;
   const allLocales = [defaultLocale, ...(site.website.locales ?? []).filter((l) => l !== defaultLocale)];
   const activeLocale = currentLocale || defaultLocale;
-  const showLanguage = allLocales.length > 1 || header.show_language === true;
+  const showLanguage = header.show_language === false ? false : allLocales.length > 1 || header.show_language === true;
 
   const currentHref = currentPath ? `/${currentPath}` : "/";
   const isActive = (url: string) => url === currentHref;
