@@ -7,7 +7,7 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000
 const SITE_SLUG = process.env.NEXT_PUBLIC_SITE_SLUG ?? "";
 const SITE_DOMAIN = process.env.NEXT_PUBLIC_SITE_DOMAIN ?? "";
 
-function siteQuery(): string {
+export function siteQuery(): string {
   return SITE_DOMAIN ? `domain=${encodeURIComponent(SITE_DOMAIN)}` : `site=${encodeURIComponent(SITE_SLUG)}`;
 }
 

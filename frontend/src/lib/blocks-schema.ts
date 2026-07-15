@@ -184,8 +184,11 @@ export const BLOCK_DEFS: BlockDef[] = [
     label: "Form",
     icon: "📨",
     description: "Embed a form built in the form builder",
-    fields: [{ path: "form_slug", label: "Form slug", type: "text", placeholder: "contact" }],
-    defaultContent: { form_slug: "contact" },
+    fields: [
+      { path: "heading", label: "Heading", type: "text" },
+      { path: "form_slug", label: "Form slug", type: "text", placeholder: "contact" },
+    ],
+    defaultContent: { heading: "Get in touch", form_slug: "contact" },
   },
   {
     type: "custom_html",

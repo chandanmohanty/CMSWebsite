@@ -20,6 +20,7 @@ Route::prefix('public')->middleware('throttle:240,1')->group(function () {
     Route::get('page', [SiteController::class, 'page']);
     Route::get('posts', [SiteController::class, 'posts']);
     Route::get('posts/{slug}', [SiteController::class, 'post']);
+    Route::get('forms/{slug}', [SiteController::class, 'form']);
     Route::post('forms/{slug}/submit', [SiteController::class, 'submitForm'])->middleware('throttle:20,1');
 });
 

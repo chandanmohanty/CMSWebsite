@@ -78,6 +78,9 @@ export default function AdminDashboard() {
                 <a href={`/admin/websites/${site.id}/theme`} className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-600 hover:bg-slate-200">
                   Theme →
                 </a>
+                <a href={`/admin/websites/${site.id}/forms`} className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-600 hover:bg-slate-200">
+                  Forms →
+                </a>
               </div>
             </div>
           ))}

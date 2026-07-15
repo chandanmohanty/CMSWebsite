@@ -113,6 +113,19 @@ class SiteController extends Controller
             ->firstOrFail();
     }
 
+    /** Public form definition for the site renderer. Only safe fields - never notifications/integrations. */
+    public function form(Request $request, string $slug)
+    {
+        $website = $this->resolveWebsite($request);
+
+        $form = Form::where('website_id', $website->id)
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        return $form->only(['name', 'slug', 'type', 'schema', 'spam_protection']);
+    }
+
     /** Public form submission with schema-driven validation + honeypot spam protection. */
     public function submitForm(Request $request, string $slug)
     {

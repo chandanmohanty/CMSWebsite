@@ -1,5 +1,6 @@
 import type { JSX } from "react";
 import type { Section } from "@/lib/types";
+import { SiteForm } from "@/components/site/SiteForm";
 
 /**
  * Block registry: maps a `block_type` stored in the database to a React renderer.
@@ -150,10 +151,11 @@ function Gallery({ content }: BlockProps) {
 }
 
 function FormEmbed({ content }: BlockProps) {
-  // Placeholder render; the interactive form component posts to /api/public/forms/{slug}/submit.
+  const slug = str(content?.form_slug);
   return (
-    <section className="mx-auto max-w-xl px-6 py-16 text-center text-slate-500">
-      <p>[Form: {str(content?.form_slug)}]</p>
+    <section className="mx-auto max-w-xl px-6 py-16">
+      {str(content?.heading) && <h2 className="mb-8 text-center text-3xl font-bold">{str(content?.heading)}</h2>}
+      {slug ? <SiteForm slug={slug} /> : <p className="text-center text-sm text-slate-400">Configure a form slug for this section.</p>}
     </section>
   );
 }
