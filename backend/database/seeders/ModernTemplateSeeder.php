@@ -112,6 +112,10 @@ class ModernTemplateSeeder extends Seeder
                         'heading' => $template['team_heading'],
                         'items' => $template['team'],
                     ]],
+                    ['block_type' => 'testimonials', 'default_content' => [
+                        'heading' => $template['testimonials_heading'],
+                        'items' => $template['testimonials'],
+                    ]],
                     ['block_type' => 'cta', 'default_content' => [
                         'heading' => $template['cta_heading'],
                         'subheading' => $template['cta_subheading'],
@@ -137,6 +141,10 @@ class ModernTemplateSeeder extends Seeder
                         'heading' => $template['process_heading'],
                         'subheading' => $template['process_subheading'],
                         'panels' => $template['panels'],
+                    ]],
+                    ['block_type' => 'testimonials', 'default_content' => [
+                        'heading' => $template['testimonials_heading'],
+                        'items' => $template['testimonials'],
                     ]],
                     ['block_type' => 'faq', 'default_content' => [
                         'heading' => 'Good to know',

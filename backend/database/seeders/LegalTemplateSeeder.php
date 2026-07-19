@@ -88,11 +88,7 @@ class LegalTemplateSeeder extends Seeder
                 ]],
                 ['block_type' => 'testimonials', 'default_content' => [
                     'heading' => 'What our clients say',
-                    'items' => [
-                        ['quote' => 'They explained my options in plain language and stood by me through the whole case.', 'name' => 'R. Sharma'],
-                        ['quote' => 'Quick to respond, honest about costs, and thoroughly prepared at every hearing.', 'name' => 'A. Fernandes'],
-                        ['quote' => 'The online consultation saved me weeks. I knew exactly where I stood the same day.', 'name' => 'P. Iyer'],
-                    ],
+                    'items' => $this->clientQuotes(),
                 ]],
                 ['block_type' => 'faq', 'default_content' => [
                     'heading' => 'Frequently asked questions',
@@ -122,6 +118,10 @@ class LegalTemplateSeeder extends Seeder
                     ['name' => 'Adv. Your Name', 'role' => 'Founder & Senior Advocate', 'image' => ''],
                     ['name' => 'Adv. Partner Name', 'role' => 'Partner — Civil Litigation', 'image' => ''],
                 ]]],
+                ['block_type' => 'testimonials', 'default_content' => [
+                    'heading' => 'Trusted by clients like you',
+                    'items' => $this->clientQuotes(),
+                ]],
                 ['block_type' => 'cta', 'default_content' => ['heading' => 'Work with a team that puts you first', 'cta' => ['label' => 'Get in touch', 'url' => '/contact']]],
             ]],
 
@@ -142,6 +142,10 @@ class LegalTemplateSeeder extends Seeder
                         ['title' => 'Cheque Bounce & Recovery', 'text' => 'Notices, prosecution and settlement of dishonoured instruments.'],
                         ['title' => 'Documentation', 'text' => 'Agreements, wills, deeds and notices drafted and vetted.'],
                     ],
+                ]],
+                ['block_type' => 'testimonials', 'default_content' => [
+                    'heading' => 'Results our clients talk about',
+                    'items' => $this->clientQuotes(),
                 ]],
                 ['block_type' => 'cta', 'default_content' => ['heading' => 'Not sure where your matter fits?', 'cta' => ['label' => 'Ask an advocate', 'url' => '/contact']]],
             ]],
@@ -164,5 +168,15 @@ class LegalTemplateSeeder extends Seeder
                 ['structure' => $layout['structure']]
             );
         }
+    }
+
+    /** Starter quotes, shared by the home, about and services layouts. */
+    private function clientQuotes(): array
+    {
+        return [
+            ['quote' => 'They explained my options in plain language and stood by me through the whole case.', 'name' => 'R. Sharma'],
+            ['quote' => 'Quick to respond, honest about costs, and thoroughly prepared at every hearing.', 'name' => 'A. Fernandes'],
+            ['quote' => 'The online consultation saved me weeks. I knew exactly where I stood the same day.', 'name' => 'P. Iyer'],
+        ];
     }
 }
