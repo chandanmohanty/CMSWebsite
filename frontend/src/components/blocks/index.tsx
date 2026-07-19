@@ -18,7 +18,36 @@ type BlockProps = {
 };
 
 type Cta = { label?: string; url?: string };
-type Item = { title?: string; text?: string; icon?: string; image?: string; name?: string; role?: string; quote?: string };
+type Item = {
+  title?: string;
+  text?: string;
+  icon?: string;
+  image?: string;
+  video?: string;
+  caption?: string;
+  points?: string;
+  name?: string;
+  role?: string;
+  quote?: string;
+};
+
+/** Shared background-video layer: muted, looping, decorative (see .hero-video in globals.css). */
+function BackgroundVideo({ src, poster }: { src: string; poster?: string }) {
+  return (
+    <video
+      className="hero-video absolute inset-0 h-full w-full object-cover"
+      src={src}
+      poster={poster || undefined}
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      aria-hidden
+      tabIndex={-1}
+    />
+  );
+}
 
 const str = (v: unknown): string => (typeof v === "string" ? v : "");
 const items = (v: unknown): Item[] => (Array.isArray(v) ? (v as Item[]) : []);
@@ -37,20 +66,7 @@ function Hero({ content, settings }: BlockProps) {
       // The image doubles as the video's poster and the reduced-motion fallback.
       style={image ? { backgroundImage: `url(${image})` } : undefined}
     >
-      {video && (
-        <video
-          className="hero-video absolute inset-0 h-full w-full object-cover"
-          src={video}
-          poster={image || undefined}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          aria-hidden
-          tabIndex={-1}
-        />
-      )}
+      {video && <BackgroundVideo src={video} poster={image} />}
       {hasMedia ? (
         <div className="absolute inset-0 bg-slate-900/55" aria-hidden />
       ) : (
@@ -110,14 +126,20 @@ function Stats({ content }: BlockProps) {
 
 /** Two side-by-side panels (e.g. "Start online / Continue in person") with check-mark points. */
 function TwoPanel({ content }: BlockProps) {
-  const panels = items(content?.panels) as { title?: string; text?: string; points?: string }[];
+  const panels = items(content?.panels);
   return (
     <section className="mx-auto max-w-6xl px-6 py-20">
       {str(content?.heading) && <h2 className="text-center text-3xl font-bold">{str(content?.heading)}</h2>}
       {str(content?.subheading) && <p className="mx-auto mt-3 max-w-2xl text-center text-[var(--color-muted,#475569)]">{str(content?.subheading)}</p>}
       <div className="mt-12 grid gap-6 md:grid-cols-2">
         {panels.map((panel, i) => (
-          <div key={i} className="rounded-2xl border border-[var(--color-border,#e2e8f0)] bg-[var(--color-surface,#ffffff)]/80 p-8 shadow-lg backdrop-blur">
+          <div key={i} className="overflow-hidden rounded-2xl border border-[var(--color-border,#e2e8f0)] bg-[var(--color-surface,#ffffff)]/80 shadow-lg backdrop-blur">
+            {panel.video ? (
+              <video src={panel.video} poster={panel.image || undefined} controls playsInline preload="metadata" className="aspect-video w-full bg-slate-900 object-cover" />
+            ) : (
+              panel.image && <img src={panel.image} alt="" className="aspect-video w-full object-cover" loading="lazy" />
+            )}
+            <div className="p-8">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-primary,#0e7490)] font-bold text-white">{i + 1}</span>
             <h3 className="mt-4 text-xl font-bold text-[var(--color-primary,#0e7490)]">{panel.title}</h3>
             {panel.text && <p className="mt-2 text-[var(--color-muted,#475569)]">{panel.text}</p>}
@@ -131,6 +153,7 @@ function TwoPanel({ content }: BlockProps) {
                 ))}
               </ul>
             )}
+            </div>
           </div>
         ))}
       </div>
@@ -222,8 +245,15 @@ function Testimonials({ content }: BlockProps) {
 
 function CtaBanner({ content }: BlockProps) {
   const cta = (content?.cta ?? {}) as Cta;
+  const video = str(content?.video);
+  const image = str(content?.image);
   return (
-    <section className="relative overflow-hidden bg-gradient-to-r from-[var(--color-secondary,#0f172a)] to-[var(--color-primary,#0e7490)] py-20 text-center text-white">
+    <section
+      className="relative overflow-hidden bg-gradient-to-r from-[var(--color-secondary,#0f172a)] to-[var(--color-primary,#0e7490)] bg-cover bg-center py-20 text-center text-white"
+      style={image ? { backgroundImage: `url(${image})` } : undefined}
+    >
+      {video && <BackgroundVideo src={video} poster={image} />}
+      {(video || image) && <div className="absolute inset-0 bg-slate-900/55" aria-hidden />}
       <div className="pointer-events-none absolute -top-20 left-1/3 h-72 w-72 rounded-full bg-[var(--color-accent,#22d3ee)]/20 blur-3xl" aria-hidden />
       <div className="relative mx-auto max-w-3xl rounded-3xl border border-white/15 bg-white/10 px-8 py-12 shadow-2xl backdrop-blur-md">
         <h2 className="text-3xl font-bold">{str(content?.heading)}</h2>
@@ -267,15 +297,51 @@ function Gallery({ content }: BlockProps) {
     <section className="mx-auto max-w-6xl px-6 py-20">
       {str(content?.heading) && <h2 className="mb-10 text-center text-3xl font-bold">{str(content?.heading)}</h2>}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {items(content?.items).map((img, i) => (
+        {items(content?.items).map((item, i) => (
           <figure key={i} className="overflow-hidden rounded-xl">
-            {(img as { image?: string }).image && (
-              <img src={(img as { image?: string }).image} alt={(img as { caption?: string }).caption ?? ""} className="h-56 w-full object-cover" />
+            {/* A tile is a video when one is set, otherwise an image. */}
+            {item.video ? (
+              <video src={item.video} poster={item.image || undefined} controls playsInline preload="metadata" className="h-56 w-full rounded-xl bg-slate-900 object-cover" />
+            ) : (
+              item.image && <img src={item.image} alt={item.caption ?? ""} className="h-56 w-full object-cover" loading="lazy" />
             )}
-            {(img as { caption?: string }).caption && <figcaption className="mt-2 text-sm text-[var(--color-muted,#64748b)]">{(img as { caption?: string }).caption}</figcaption>}
+            {item.caption && <figcaption className="mt-2 text-sm text-[var(--color-muted,#64748b)]">{item.caption}</figcaption>}
           </figure>
         ))}
       </div>
+    </section>
+  );
+}
+
+/** Standalone video section with a real player (visitor-controlled or ambient loop). */
+function VideoBlock({ content, settings }: BlockProps) {
+  const src = str(content?.video);
+  const poster = str(content?.poster);
+  const ambient = settings?.playback === "ambient";
+
+  return (
+    <section className="mx-auto max-w-5xl px-6 py-20">
+      {str(content?.heading) && <h2 className="text-center text-3xl font-bold">{str(content?.heading)}</h2>}
+      {str(content?.subheading) && <p className="mx-auto mt-3 max-w-2xl text-center text-[var(--color-muted,#475569)]">{str(content?.subheading)}</p>}
+
+      {src ? (
+        <div className="mt-10 overflow-hidden rounded-2xl border border-[var(--color-border,#e2e8f0)] bg-slate-900 shadow-xl">
+          <video
+            src={src}
+            poster={poster || undefined}
+            className="aspect-video w-full"
+            playsInline
+            preload="metadata"
+            {...(ambient ? { autoPlay: true, muted: true, loop: true } : { controls: true })}
+          />
+        </div>
+      ) : (
+        <p className="mt-10 rounded-xl border border-dashed border-[var(--color-border,#e2e8f0)] p-10 text-center text-sm text-[var(--color-muted,#64748b)]">
+          Choose a video for this section.
+        </p>
+      )}
+
+      {str(content?.caption) && <p className="mt-3 text-center text-sm text-[var(--color-muted,#64748b)]">{str(content?.caption)}</p>}
     </section>
   );
 }
@@ -304,6 +370,7 @@ const BLOCKS: Record<string, (props: BlockProps) => JSX.Element> = {
   testimonials: Testimonials,
   faq: Faq,
   gallery: Gallery,
+  video: VideoBlock,
   cta: CtaBanner,
   form_embed: FormEmbed,
   custom_html: CustomHtml,
