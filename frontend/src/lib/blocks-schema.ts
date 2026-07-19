@@ -6,7 +6,7 @@
  * block_type names - adding a block means one entry here + one component there.
  */
 
-export type FieldType = "text" | "textarea" | "url" | "image" | "select";
+export type FieldType = "text" | "textarea" | "url" | "image" | "video" | "select";
 
 export interface FieldDef {
   /** Dot path into the section content, e.g. "cta.label". Prefix "settings." targets section settings. */
@@ -54,7 +54,8 @@ export const BLOCK_DEFS: BlockDef[] = [
       { path: "badge", label: "Badge (small pill above heading)", type: "text" },
       { path: "heading", label: "Heading", type: "text" },
       { path: "subheading", label: "Subheading", type: "textarea" },
-      { path: "image", label: "Background image", type: "image" },
+      { path: "video", label: "Background video (MP4/WebM)", type: "video" },
+      { path: "image", label: "Background image (also the video's poster)", type: "image" },
       ...ctaFields(),
       { path: "cta2.label", label: "Second button text", type: "text" },
       { path: "cta2.url", label: "Second button link", type: "url" },

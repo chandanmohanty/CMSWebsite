@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Template;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
@@ -43,52 +42,7 @@ class DatabaseSeeder extends Seeder
         );
         $admin->assignRole('super_admin');
 
-        // --- Demo template: Healthcare ---
-        $template = Template::firstOrCreate(
-            ['slug' => 'healthcare-classic'],
-            [
-                'name' => 'Healthcare Classic',
-                'industry' => 'healthcare',
-                'description' => 'Clean, trust-focused template for hospitals and clinics.',
-                'design_tokens' => [
-                    'colors' => ['primary' => '#0e7490', 'secondary' => '#0f172a', 'accent' => '#22d3ee'],
-                    'typography' => ['heading' => 'Inter', 'body' => 'Inter'],
-                    'radius' => '0.75rem',
-                ],
-            ]
-        );
-
-        $template->layouts()->firstOrCreate(
-            ['page_type' => 'home', 'name' => 'Default Home'],
-            ['structure' => [
-                ['block_type' => 'hero', 'default_settings' => ['variant' => 'centered'], 'default_content' => [
-                    'heading' => 'Compassionate care, advanced medicine',
-                    'subheading' => 'Serving our community with world-class healthcare.',
-                    'cta' => ['label' => 'Book an appointment', 'url' => '/contact'],
-                ]],
-                ['block_type' => 'services_grid', 'default_content' => ['heading' => 'Our departments', 'items' => []]],
-                ['block_type' => 'testimonials', 'default_content' => ['heading' => 'Patient stories', 'items' => []]],
-                ['block_type' => 'cta', 'default_content' => ['heading' => 'Need a specialist?', 'cta' => ['label' => 'Find a doctor', 'url' => '/team']]],
-            ]]
-        );
-
-        $template->layouts()->firstOrCreate(
-            ['page_type' => 'about', 'name' => 'Default About'],
-            ['structure' => [
-                ['block_type' => 'hero', 'default_settings' => ['variant' => 'compact']],
-                ['block_type' => 'rich_text'],
-                ['block_type' => 'team_grid', 'default_content' => ['heading' => 'Our leadership', 'items' => []]],
-            ]]
-        );
-
-        $template->layouts()->firstOrCreate(
-            ['page_type' => 'contact', 'name' => 'Default Contact'],
-            ['structure' => [
-                ['block_type' => 'hero', 'default_settings' => ['variant' => 'compact']],
-                ['block_type' => 'form_embed', 'default_content' => ['form_slug' => 'contact']],
-            ]]
-        );
-
         $this->call(LegalTemplateSeeder::class);
+        $this->call(ModernTemplateSeeder::class);
     }
 }

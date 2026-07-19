@@ -59,6 +59,18 @@ Then:
 3. Put the website's slug into `frontend/.env.local` → `NEXT_PUBLIC_SITE_SLUG`.
 4. Create + publish a home page (empty slug) — it renders at `http://localhost:3000`.
 
+## Media uploads (images & video)
+
+The API accepts uploads up to 50 MB per file, but PHP's own limits apply first. For hero background videos raise them in your `php.ini`:
+
+```ini
+upload_max_filesize = 64M
+post_max_size = 72M
+max_execution_time = 120
+```
+
+MP4 (H.264) is the safest format for background video; keep clips short, muted and compressed — they autoplay on every page load.
+
 ## AI providers
 
 Add providers as super admin via `POST /api/ai/providers` with `driver` = `openai` | `anthropic` | `gemini` | `custom` (any OpenAI-compatible `base_url`). Keys are encrypted at rest. Then:

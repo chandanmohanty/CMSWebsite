@@ -10,8 +10,8 @@ interface Props {
   section: BuilderSection;
   onChange: (patch: Partial<BuilderSection>) => void;
   onClose: () => void;
-  /** When provided, image fields get a "Browse" button that opens the media picker. */
-  onBrowseImage?: (assign: (url: string) => void) => void;
+  /** When provided, image/video fields get a "Browse" button that opens the media picker. */
+  onBrowseImage?: (assign: (url: string) => void, kind?: "image" | "video") => void;
   /** When provided, text fields get the ✨ AI assist button. */
   aiApi?: AiTextApi;
 }
@@ -19,17 +19,19 @@ interface Props {
 const inputClass =
   "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500";
 
-/** URL input + thumbnail + optional media-library browse button. */
-function ImageInput({
+/** URL input + preview + optional media-library browse button (images and videos). */
+function MediaInput({
   value,
   placeholder,
+  kind,
   onChange,
   onBrowse,
 }: {
   value: string;
   placeholder?: string;
+  kind: "image" | "video";
   onChange: (v: string) => void;
-  onBrowse?: (assign: (url: string) => void) => void;
+  onBrowse?: (assign: (url: string) => void, kind?: "image" | "video") => void;
 }) {
   return (
     <div>
@@ -38,18 +40,31 @@ function ImageInput({
         {onBrowse && (
           <button
             type="button"
-            onClick={() => onBrowse(onChange)}
+            onClick={() => onBrowse(onChange, kind)}
             className="shrink-0 rounded-lg border border-slate-300 px-2.5 text-sm hover:border-cyan-400 hover:bg-cyan-50"
-            title="Choose from media library"
+            title={`Choose ${kind} from media library (upload supported)`}
           >
             📁
           </button>
         )}
+        {value && (
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="shrink-0 rounded-lg border border-red-200 px-2.5 text-sm text-red-600 hover:bg-red-50"
+            title="Clear"
+          >
+            ✕
+          </button>
+        )}
       </div>
-      {value && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={value} alt="" className="mt-2 h-20 w-full rounded-lg border border-slate-200 object-cover" />
-      )}
+      {value &&
+        (kind === "video" ? (
+          <video src={value} className="mt-2 h-24 w-full rounded-lg border border-slate-200 bg-slate-900 object-cover" muted loop autoPlay playsInline />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={value} alt="" className="mt-2 h-20 w-full rounded-lg border border-slate-200 object-cover" />
+        ))}
     </div>
   );
 }
@@ -141,8 +156,14 @@ export function Inspector({ section, onChange, onClose, onBrowseImage, aiApi }: 
                   </option>
                 ))}
               </select>
-            ) : field.type === "image" ? (
-              <ImageInput value={readField(field)} placeholder={field.placeholder} onChange={(v) => writeField(field, v)} onBrowse={onBrowseImage} />
+            ) : field.type === "image" || field.type === "video" ? (
+              <MediaInput
+                value={readField(field)}
+                placeholder={field.placeholder}
+                kind={field.type}
+                onChange={(v) => writeField(field, v)}
+                onBrowse={onBrowseImage}
+              />
             ) : (
               <input
                 type="text"
@@ -200,8 +221,14 @@ export function Inspector({ section, onChange, onClose, onBrowseImage, aiApi }: 
                           </span>
                           {f.type === "textarea" ? (
                             <textarea rows={3} className={inputClass} value={item[f.key] ?? ""} placeholder={f.placeholder} onChange={(e) => updateItem(i, f.key, e.target.value)} />
-                          ) : f.type === "image" ? (
-                            <ImageInput value={item[f.key] ?? ""} placeholder={f.placeholder} onChange={(v) => updateItem(i, f.key, v)} onBrowse={onBrowseImage} />
+                          ) : f.type === "image" || f.type === "video" ? (
+                            <MediaInput
+                              value={item[f.key] ?? ""}
+                              placeholder={f.placeholder}
+                              kind={f.type}
+                              onChange={(v) => updateItem(i, f.key, v)}
+                              onBrowse={onBrowseImage}
+                            />
                           ) : (
                             <input className={inputClass} value={item[f.key] ?? ""} placeholder={f.placeholder} onChange={(e) => updateItem(i, f.key, e.target.value)} />
                           )}

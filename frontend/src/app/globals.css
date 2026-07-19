@@ -43,6 +43,19 @@ body {
 .themed .btn {
   border-radius: var(--btn-radius, 0.5rem);
 }
+
+/* Background videos are decorative: never autoplay motion for visitors who
+   asked for less of it - the poster/background image shows instead. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-video {
+    display: none;
+  }
+}
+.themed .rounded-xl,
+.themed .rounded-2xl,
+.themed .rounded-3xl {
+  border-radius: var(--card-radius, 0.75rem);
+}
 .themed .max-w-6xl,
 .themed .max-w-5xl {
   max-width: var(--content-max, 72rem);

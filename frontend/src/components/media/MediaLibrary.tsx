@@ -19,13 +19,15 @@ interface Props {
   /** When set, items get a "Select" action and the library acts as a picker. */
   onPick?: (item: MediaItem) => void;
   title?: string;
+  /** Pre-selected type filter (the picker uses this to show only videos, etc.). */
+  initialType?: string;
 }
 
-export function MediaLibrary({ api, onPick, title = "Media library" }: Props) {
+export function MediaLibrary({ api, onPick, title = "Media library", initialType = "" }: Props) {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [folders, setFolders] = useState<MediaFolderNode[]>([]);
   const [currentFolder, setCurrentFolder] = useState<number | null>(null);
-  const [typeFilter, setTypeFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState(initialType);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);

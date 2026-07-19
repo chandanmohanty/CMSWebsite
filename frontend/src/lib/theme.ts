@@ -54,6 +54,8 @@ export function themeToCssVars(tokens?: DesignTokens | null, theme?: ThemeSettin
   const preset = MODE_PRESETS[theme?.mode === "dark" ? "dark" : "light"];
   const colors = theme?.colors ?? {};
   const base = tokens?.colors ?? {};
+  const templateTypography = tokens?.typography ?? {};
+  const templateRadius = tokens?.radius ?? "0.75rem";
 
   return {
     "--color-primary": colors.primary ?? base.primary ?? "#0e7490",
@@ -65,10 +67,11 @@ export function themeToCssVars(tokens?: DesignTokens | null, theme?: ThemeSettin
     "--color-surface-alt": preset.surfaceAlt,
     "--color-muted": preset.muted,
     "--color-border": preset.border,
-    "--font-heading": theme?.typography?.heading_font || "inherit",
-    "--font-body": theme?.typography?.body_font || "inherit",
+    "--font-heading": theme?.typography?.heading_font || templateTypography.heading || "inherit",
+    "--font-body": theme?.typography?.body_font || templateTypography.body || "inherit",
     "--text-base": `${theme?.typography?.base_size ?? 16}px`,
-    "--btn-radius": `${theme?.buttons?.radius ?? 8}px`,
+    "--btn-radius": theme?.buttons?.radius === undefined ? templateRadius : `${theme.buttons.radius}px`,
+    "--card-radius": templateRadius,
     "--content-max": theme?.layout?.max_width ? `${theme.layout.max_width}px` : "72rem",
   };
 }

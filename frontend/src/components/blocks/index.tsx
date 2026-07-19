@@ -28,14 +28,31 @@ function Hero({ content, settings }: BlockProps) {
   const cta2 = (content?.cta2 ?? {}) as Cta;
   const compact = settings?.variant === "compact";
   const image = str(content?.image);
+  const video = str(content?.video);
   const badge = str(content?.badge);
+  const hasMedia = Boolean(image || video);
   return (
     <section
       className={`relative overflow-hidden bg-gradient-to-br from-[var(--color-primary,#0e7490)] to-[var(--color-secondary,#0f172a)] bg-cover bg-center text-white ${compact ? "py-16" : "py-28"}`}
+      // The image doubles as the video's poster and the reduced-motion fallback.
       style={image ? { backgroundImage: `url(${image})` } : undefined}
     >
-      {image ? (
-        <div className="absolute inset-0 bg-slate-900/50" aria-hidden />
+      {video && (
+        <video
+          className="hero-video absolute inset-0 h-full w-full object-cover"
+          src={video}
+          poster={image || undefined}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-hidden
+          tabIndex={-1}
+        />
+      )}
+      {hasMedia ? (
+        <div className="absolute inset-0 bg-slate-900/55" aria-hidden />
       ) : (
         <>
           {/* decorative blur orbs behind the glass elements */}

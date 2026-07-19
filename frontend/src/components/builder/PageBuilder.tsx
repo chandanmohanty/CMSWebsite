@@ -60,8 +60,9 @@ export function PageBuilder({ pageTitle, pageStatus, initialSections, onSave, on
   const [saving, setSaving] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [activeDragUid, setActiveDragUid] = useState<string | null>(null);
-  // Media picker: holds the setter of whichever image field opened it.
+  // Media picker: holds the setter of whichever media field opened it, plus the type it wants.
   const [pickerAssign, setPickerAssign] = useState<((url: string) => void) | null>(null);
+  const [pickerKind, setPickerKind] = useState<"image" | "video">("image");
 
   // --- Undo / redo (bounded history of section states) ---
   // IMPORTANT: history bookkeeping must stay OUTSIDE React state updaters -
@@ -378,7 +379,14 @@ export function PageBuilder({ pageTitle, pageStatus, initialSections, onSave, on
                 section={selected}
                 onChange={(patch) => updateSection(selected.uid, patch)}
                 onClose={() => setSelectedUid(null)}
-                onBrowseImage={mediaApi ? (assign) => setPickerAssign(() => assign) : undefined}
+                onBrowseImage={
+                  mediaApi
+                    ? (assign, kind) => {
+                        setPickerKind(kind ?? "image");
+                        setPickerAssign(() => assign);
+                      }
+                    : undefined
+                }
                 aiApi={aiApi}
               />
             ) : (
@@ -407,6 +415,7 @@ export function PageBuilder({ pageTitle, pageStatus, initialSections, onSave, on
       {mediaApi && pickerAssign && (
         <MediaPickerDialog
           api={mediaApi}
+          initialType={pickerKind}
           onClose={() => setPickerAssign(null)}
           onPick={(item) => {
             pickerAssign(item.url);

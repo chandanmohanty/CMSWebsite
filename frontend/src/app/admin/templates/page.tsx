@@ -1,8 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminFetch } from "@/lib/api";
+import type { DesignTokens } from "@/lib/types";
 
 interface TemplateCard {
   id: number;
@@ -10,7 +12,7 @@ interface TemplateCard {
   slug: string;
   industry: string;
   description: string | null;
-  design_tokens: { colors?: Record<string, string> } | null;
+  design_tokens: DesignTokens | null;
   layouts_count: number;
   websites_count: number;
 }
@@ -23,10 +25,11 @@ interface WebsiteOption {
 
 export default function TemplatesPage() {
   const router = useRouter();
-  const [ready, setReady] = useState(false);
   const [templates, setTemplates] = useState<TemplateCard[] | null>(null);
   const [websites, setWebsites] = useState<WebsiteOption[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [industry, setIndustry] = useState("all");
 
   // Activation dialog state
   const [activating, setActivating] = useState<TemplateCard | null>(null);
@@ -52,7 +55,6 @@ export default function TemplatesPage() {
       router.replace("/admin/login");
       return;
     }
-    setReady(true);
     load();
   }, [router, load]);
 
@@ -99,66 +101,156 @@ export default function TemplatesPage() {
     }
   };
 
-  if (!ready) return null;
+  const industries = useMemo(
+    () => Array.from(new Set((templates ?? []).map((template) => template.industry))).sort(),
+    [templates],
+  );
 
-  const swatches = (t: TemplateCard) => Object.values(t.design_tokens?.colors ?? {}).slice(0, 4);
+  const visibleTemplates = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    return (templates ?? []).filter((template) => {
+      const matchesIndustry = industry === "all" || template.industry === industry;
+      const matchesTerm =
+        !term ||
+        template.name.toLowerCase().includes(term) ||
+        template.industry.toLowerCase().includes(term) ||
+        template.description?.toLowerCase().includes(term);
+      return matchesIndustry && matchesTerm;
+    });
+  }, [templates, query, industry]);
+
+  const swatches = (template: TemplateCard) =>
+    Object.values(template.design_tokens?.colors ?? {})
+      .filter((color): color is string => Boolean(color))
+      .slice(0, 4);
 
   return (
     <div className="min-h-screen bg-slate-100">
       <header className="flex h-12 items-center gap-4 border-b border-slate-200 bg-white px-4">
-        <a href="/admin" className="text-sm text-slate-500 hover:text-slate-900">
+        <Link href="/admin" className="text-sm text-slate-500 hover:text-slate-900">
           ← Dashboard
-        </a>
+        </Link>
         <span className="text-sm font-semibold">Templates</span>
       </header>
 
-      <div className="mx-auto max-w-5xl px-6 py-8">
-        <h1 className="text-2xl font-bold">Template gallery</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Activating a template applies its design to a website and creates its pages with starter content — everything stays editable in the page builder.
-        </p>
+      <div className="mx-auto max-w-7xl px-6 py-10">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-700">Design library</p>
+            <h1 className="mt-1 text-3xl font-bold tracking-tight">Template gallery</h1>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
+              Launch with complete starter pages, tailored content, and a distinct visual system. Every section remains editable in the page builder.
+            </p>
+          </div>
+          {templates && (
+            <span className="w-fit rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-xs font-semibold text-cyan-800">
+              {templates.length} templates ready
+            </span>
+          )}
+        </div>
         {error && !activating && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
-        <div className="mt-6 grid gap-5 sm:grid-cols-2">
+        <div className="mt-7 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row">
+          <label className="relative flex-1">
+            <span className="sr-only">Search templates</span>
+            <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search by name or industry…"
+              className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-3 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+            />
+          </label>
+          <label>
+            <span className="sr-only">Filter by industry</span>
+            <select
+              value={industry}
+              onChange={(event) => setIndustry(event.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm capitalize outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 sm:w-52"
+            >
+              <option value="all">All industries</option>
+              {industries.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {templates === null && <p className="text-slate-500">Loading…</p>}
-          {templates?.map((template) => (
-            <div key={template.id} className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              {/* mini design preview from the template's tokens */}
-              <div className="mb-4 overflow-hidden rounded-lg border border-slate-100">
-                <div className="flex h-16 items-center justify-center px-4" style={{ background: template.design_tokens?.colors?.primary ?? "#0e7490" }}>
-                  <span className="truncate font-serif text-sm font-bold text-white">{template.name}</span>
+          {visibleTemplates.map((template) => {
+            const primary = template.design_tokens?.colors?.primary ?? "#0e7490";
+            const secondary = template.design_tokens?.colors?.secondary ?? "#0f172a";
+            const accent = template.design_tokens?.colors?.accent ?? "#22d3ee";
+
+            return (
+            <article key={template.id} className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg">
+              <div className="mb-4 overflow-hidden border border-slate-100" style={{ borderRadius: template.design_tokens?.radius ?? "0.75rem" }}>
+                <div className="h-36 px-4 py-3 text-white" style={{ background: `linear-gradient(135deg, ${primary}, ${secondary})` }}>
+                  <div className="flex items-center justify-between border-b border-white/20 pb-2">
+                    <span className="max-w-[70%] truncate text-[10px] font-bold uppercase tracking-[0.16em]">{template.name}</span>
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: accent }} />
+                  </div>
+                  <div className="flex h-[92px] items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="h-2 w-4/5 rounded-full bg-white/90" />
+                      <div className="mt-2 h-2 w-3/5 rounded-full bg-white/55" />
+                      <div className="mt-3 h-5 w-16 rounded-full" style={{ background: accent }} />
+                    </div>
+                    <div className="grid w-20 grid-cols-2 gap-2">
+                      {[0, 1, 2, 3].map((item) => (
+                        <span key={item} className="aspect-square rounded-md border border-white/15 bg-white/10 backdrop-blur" />
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                <div className="flex gap-2 p-2" style={{ background: "#f8fafc" }}>
-                  {[0, 1, 2].map((i) => (
-                    <span key={i} className="h-6 flex-1 rounded" style={{ background: "#e2e8f0" }} />
+                <div className="grid grid-cols-3 gap-2 bg-slate-50 p-2.5">
+                  {[0, 1, 2].map((item) => (
+                    <span key={item} className="h-5 rounded-md border border-slate-200 bg-white" />
                   ))}
-                  <span className="h-6 w-16 rounded" style={{ background: template.design_tokens?.colors?.accent ?? "#22d3ee" }} />
                 </div>
               </div>
 
               <div className="flex items-start justify-between gap-2">
-                <h2 className="font-bold">{template.name}</h2>
+                <h2 className="font-bold tracking-tight" style={{ fontFamily: template.design_tokens?.typography?.heading }}>
+                  {template.name}
+                </h2>
                 <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium capitalize text-slate-600">{template.industry}</span>
               </div>
-              <p className="mt-1 flex-1 text-sm text-slate-500">{template.description}</p>
+              <p className="mt-1.5 flex-1 text-sm leading-5 text-slate-500">{template.description}</p>
 
-              <div className="mt-3 flex items-center gap-2">
+              <div className="mt-4 flex items-center gap-2">
                 {swatches(template).map((color) => (
                   <span key={color} className="h-4 w-4 rounded-full border border-slate-200" style={{ background: color }} title={color} />
                 ))}
-                <span className="ml-auto text-xs text-slate-400">
+                <span className="ml-auto text-right text-xs leading-4 text-slate-400">
                   {template.layouts_count} page layouts · used by {template.websites_count} site{template.websites_count === 1 ? "" : "s"}
                 </span>
               </div>
 
               <button
                 onClick={() => openActivate(template)}
-                className="mt-4 rounded-lg bg-cyan-700 py-2 text-sm font-semibold text-white hover:bg-cyan-800"
+                className="mt-4 rounded-xl py-2.5 text-sm font-semibold text-white transition hover:brightness-90 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2"
+                style={{ background: primary }}
               >
-                Activate…
+                Use this template
+              </button>
+            </article>
+            );
+          })}
+          {templates !== null && visibleTemplates.length === 0 && (
+            <div className="col-span-full rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
+              <p className="font-semibold text-slate-700">No templates match those filters.</p>
+              <button onClick={() => { setQuery(""); setIndustry("all"); }} className="mt-2 text-sm font-semibold text-cyan-700 hover:text-cyan-900">
+                Clear filters
               </button>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
@@ -179,9 +271,9 @@ export default function TemplatesPage() {
                   {result.pages.length === 0 && <li className="text-slate-400">No new pages (all page types already existed) — the design was applied.</li>}
                 </ul>
                 <div className="mt-5 flex gap-2">
-                  <a href={`/admin/websites/${result.websiteId}/pages`} className="flex-1 rounded-lg bg-cyan-700 py-2 text-center text-sm font-semibold text-white hover:bg-cyan-800">
+                  <Link href={`/admin/websites/${result.websiteId}/pages`} className="flex-1 rounded-lg bg-cyan-700 py-2 text-center text-sm font-semibold text-white hover:bg-cyan-800">
                     Open pages & builder
-                  </a>
+                  </Link>
                   <button onClick={() => setActivating(null)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm">
                     Done
                   </button>

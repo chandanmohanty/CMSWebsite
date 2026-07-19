@@ -8,10 +8,12 @@ interface Props {
   api: MediaApi;
   onPick: (item: MediaItem) => void;
   onClose: () => void;
+  /** Pre-select a media type filter (e.g. "video" when picking a background video). */
+  initialType?: string;
 }
 
-/** Full media library in a modal - used as the image picker across the admin. */
-export function MediaPickerDialog({ api, onPick, onClose }: Props) {
+/** Full media library in a modal - used as the image/video picker across the admin. */
+export function MediaPickerDialog({ api, onPick, onClose, initialType }: Props) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -29,7 +31,7 @@ export function MediaPickerDialog({ api, onPick, onClose }: Props) {
             ✕
           </button>
         </div>
-        <MediaLibrary api={api} onPick={onPick} title="" />
+        <MediaLibrary api={api} onPick={onPick} title="" initialType={initialType} />
       </div>
     </div>
   );
