@@ -15,6 +15,8 @@ import { SiteForm } from "@/components/site/SiteForm";
 type BlockProps = {
   content: Record<string, unknown> | null;
   settings: Record<string, unknown> | null;
+  /** True inside the page builder, so blocks can show "needs setup" hints the public site must not. */
+  editor?: boolean;
 };
 
 type Cta = { label?: string; url?: string };
@@ -314,10 +316,13 @@ function Gallery({ content }: BlockProps) {
 }
 
 /** Standalone video section with a real player (visitor-controlled or ambient loop). */
-function VideoBlock({ content, settings }: BlockProps) {
+function VideoBlock({ content, settings, editor }: BlockProps) {
   const src = str(content?.video);
   const poster = str(content?.poster);
   const ambient = settings?.playback === "ambient";
+
+  // Until a clip is chosen the section is a no-op for visitors; the builder still shows it.
+  if (!src && !editor) return null;
 
   return (
     <section className="mx-auto max-w-5xl px-6 py-20">
@@ -360,7 +365,7 @@ function CustomHtml({ content }: BlockProps) {
   return <section dangerouslySetInnerHTML={{ __html: str(content?.html) }} />;
 }
 
-const BLOCKS: Record<string, (props: BlockProps) => JSX.Element> = {
+const BLOCKS: Record<string, (props: BlockProps) => JSX.Element | null> = {
   hero: Hero,
   stats: Stats,
   two_panel: TwoPanel,
@@ -380,7 +385,7 @@ const BLOCKS: Record<string, (props: BlockProps) => JSX.Element> = {
 export function BlockPreview({ blockType, content, settings }: { blockType: string; content: Record<string, unknown> | null; settings: Record<string, unknown> | null }) {
   const Block = BLOCKS[blockType];
   if (!Block) return <div className="p-8 text-center text-sm text-slate-400">Unknown block: {blockType}</div>;
-  return <Block content={content} settings={settings} />;
+  return <Block content={content} settings={settings} editor />;
 }
 
 export function BlockRenderer({ sections }: { sections: Section[] }) {
