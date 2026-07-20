@@ -1,6 +1,7 @@
 import type { JSX } from "react";
 import type { Section } from "@/lib/types";
 import { SiteForm } from "@/components/site/SiteForm";
+import { Roadmap } from "./Roadmap";
 
 /**
  * Block registry: maps a `block_type` stored in the database to a React renderer.
@@ -475,6 +476,7 @@ const BLOCKS: Record<string, (props: BlockProps) => JSX.Element | null> = {
   hero: Hero,
   stats: Stats,
   two_panel: TwoPanel,
+  roadmap: Roadmap,
   rich_text: RichText,
   services_grid: ServicesGrid,
   team_grid: TeamGrid,
