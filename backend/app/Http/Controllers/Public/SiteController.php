@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Mail;
 class SiteController extends Controller
 {
     /** Settings groups safe to expose publicly. `integrations` (CRM keys, webhooks) is deliberately excluded. */
-    private const PUBLIC_SETTING_GROUPS = ['header', 'footer', 'theme', 'seo', 'social', 'robots'];
+    private const PUBLIC_SETTING_GROUPS = ['header', 'footer', 'theme', 'seo', 'social', 'actions', 'robots'];
 
     private function resolveWebsite(Request $request): Website
     {

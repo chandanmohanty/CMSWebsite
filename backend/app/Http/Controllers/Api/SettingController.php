@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
  */
 class SettingController extends Controller
 {
-    public const GROUPS = ['header', 'footer', 'theme', 'seo', 'social', 'integrations', 'robots'];
+    public const GROUPS = ['header', 'footer', 'theme', 'seo', 'social', 'actions', 'integrations', 'robots'];
 
     public function index(Website $website)
     {

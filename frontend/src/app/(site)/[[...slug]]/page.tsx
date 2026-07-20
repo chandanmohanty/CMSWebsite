@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { BlockRenderer } from "@/components/blocks";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
+import { FloatingActions } from "@/components/site/FloatingActions";
 import { fetchPage, fetchSite } from "@/lib/api";
 import { localizedHref, splitLocaleFromPath } from "@/lib/locales";
 import { themeToCssVars, type ThemeSettings } from "@/lib/theme";
@@ -83,6 +84,7 @@ export default async function SitePage({ params }: Props) {
         <BlockRenderer sections={data.sections} />
       </main>
       <Footer site={site} />
+      <FloatingActions site={site} />
     </div>
   );
 }
