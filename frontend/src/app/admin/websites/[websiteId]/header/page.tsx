@@ -167,6 +167,9 @@ export default function HeaderSettingsPage({ params }: { params: Promise<{ websi
         <a href={`/admin/websites/${websiteId}/theme`} className="text-sm text-slate-500 hover:text-slate-900">
           Theme
         </a>
+        <a href={`/admin/websites/${websiteId}/settings`} className="text-sm text-slate-500 hover:text-slate-900">
+          Site settings
+        </a>
         <span className="text-sm font-semibold">Header</span>
       </header>
 

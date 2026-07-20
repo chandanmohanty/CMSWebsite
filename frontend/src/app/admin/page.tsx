@@ -80,6 +80,9 @@ export default function AdminDashboard() {
                 <a href={`/admin/websites/${site.id}/header`} className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-600 hover:bg-slate-200">
                   Header →
                 </a>
+                <a href={`/admin/websites/${site.id}/settings`} className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-600 hover:bg-slate-200">
+                  Site settings →
+                </a>
                 <a href={`/admin/websites/${site.id}/theme`} className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-600 hover:bg-slate-200">
                   Theme →
                 </a>
