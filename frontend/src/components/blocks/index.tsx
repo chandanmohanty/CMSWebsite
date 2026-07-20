@@ -19,7 +19,7 @@ type BlockProps = {
   editor?: boolean;
 };
 
-type Cta = { label?: string; url?: string };
+type Cta = { label?: string; url?: string; icon?: string };
 type Item = {
   title?: string;
   text?: string;
@@ -31,7 +31,38 @@ type Item = {
   name?: string;
   role?: string;
   quote?: string;
+  value?: string;
+  label?: string;
+  avatar1?: string;
+  avatar2?: string;
+  avatar3?: string;
 };
+
+/** Renders *starred* words in the accent colour, so admins can highlight part of a heading. */
+function highlight(text: string) {
+  return text.split(/(\*[^*]+\*)/g).map((part, i) =>
+    part.length > 2 && part.startsWith("*") && part.endsWith("*") ? (
+      <span key={i} className="text-[var(--color-accent,#22d3ee)]">
+        {part.slice(1, -1)}
+      </span>
+    ) : (
+      part
+    )
+  );
+}
+
+/** "Label|https://url" per line -> link list (used by the hero's promo banner). */
+function parseLinks(raw: string): { label: string; url: string }[] {
+  return raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [label, url] = line.split("|");
+      return { label: (label ?? "").trim(), url: (url ?? "#").trim() };
+    })
+    .filter((link) => link.label);
+}
 
 /** Shared background-video layer: muted, looping, decorative (see .hero-video in globals.css). */
 function BackgroundVideo({ src, poster }: { src: string; poster?: string }) {
@@ -58,10 +89,15 @@ function Hero({ content, settings }: BlockProps) {
   const cta = (content?.cta ?? {}) as Cta;
   const cta2 = (content?.cta2 ?? {}) as Cta;
   const compact = settings?.variant === "compact";
+  const left = settings?.align === "left";
   const image = str(content?.image);
   const video = str(content?.video);
   const badge = str(content?.badge);
   const hasMedia = Boolean(image || video);
+  const proof = items(content?.proof);
+  const banner = (content?.banner ?? {}) as { label?: string; title?: string; links?: string; cta?: Cta };
+  const bannerCta = (banner.cta ?? {}) as Cta;
+  const bannerLinks = parseLinks(banner.links ?? "");
   return (
     <section
       className={`relative overflow-hidden bg-gradient-to-br from-[var(--color-primary,#0e7490)] to-[var(--color-secondary,#0f172a)] bg-cover bg-center text-white ${compact ? "py-16" : "py-28"}`}
@@ -78,30 +114,100 @@ function Hero({ content, settings }: BlockProps) {
           <div className="pointer-events-none absolute -bottom-32 -right-16 h-96 w-96 rounded-full bg-[var(--color-accent,#22d3ee)]/25 blur-3xl" aria-hidden />
         </>
       )}
-      <div className="relative mx-auto max-w-5xl px-6 text-center">
-        {badge && (
-          <span className="mb-6 inline-block rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-sm font-medium shadow-lg backdrop-blur-md">
-            {badge}
-          </span>
-        )}
-        <h1 className={`font-bold tracking-tight ${compact ? "text-3xl" : "text-5xl leading-tight"}`}>{str(content?.heading)}</h1>
-        {str(content?.subheading) && <p className="mx-auto mt-5 max-w-2xl text-lg text-white/85">{str(content?.subheading)}</p>}
-        <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          {cta.label && (
-            <a
-              href={cta.url ?? "#"}
-              className="btn inline-block rounded-lg bg-[var(--color-accent,#22d3ee)] px-7 py-3 font-semibold text-[var(--color-secondary,#0f172a)] shadow-lg shadow-black/20 transition hover:-translate-y-0.5 hover:opacity-95"
-            >
-              {cta.label}
-            </a>
+      <div className={`relative mx-auto max-w-6xl px-6 ${left ? "text-left" : "text-center"}`}>
+        <div className={left ? "max-w-3xl" : "mx-auto max-w-5xl"}>
+          {badge && (
+            <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-sm font-medium shadow-lg backdrop-blur-md">
+              <span className="h-2 w-2 rounded-full bg-[var(--color-accent,#22d3ee)]" aria-hidden />
+              {badge}
+            </span>
           )}
-          {cta2.label && (
-            <a
-              href={cta2.url ?? "#"}
-              className="btn inline-block rounded-lg border border-white/40 bg-white/10 px-7 py-3 font-semibold text-white backdrop-blur-md transition hover:bg-white/20"
-            >
-              {cta2.label}
-            </a>
+
+          <h1 className={`font-bold tracking-tight ${compact ? "text-3xl" : "text-4xl leading-tight sm:text-5xl"}`}>{highlight(str(content?.heading))}</h1>
+
+          {str(content?.tagline) && (
+            <p className="mt-4 text-lg font-semibold text-[var(--color-accent,#22d3ee)] sm:text-xl">{str(content?.tagline)}</p>
+          )}
+
+          {str(content?.subheading) && (
+            <p className={`mt-4 text-lg text-white/80 ${left ? "max-w-2xl" : "mx-auto max-w-2xl"}`}>{str(content?.subheading)}</p>
+          )}
+
+          <div className={`mt-9 flex flex-wrap items-center gap-3 ${left ? "" : "justify-center"}`}>
+            {cta.label && (
+              <a
+                href={cta.url ?? "#"}
+                className="btn inline-flex items-center gap-2 rounded-lg bg-[var(--color-accent,#22d3ee)] px-7 py-3.5 font-semibold text-[var(--color-secondary,#0f172a)] shadow-lg shadow-black/20 transition hover:-translate-y-0.5 hover:opacity-95"
+              >
+                {cta.icon && <span aria-hidden>{cta.icon}</span>}
+                {cta.label}
+              </a>
+            )}
+            {cta2.label && (
+              <a
+                href={cta2.url ?? "#"}
+                className="btn inline-flex items-center gap-2 rounded-lg border border-white/40 bg-white/10 px-7 py-3.5 font-semibold text-white backdrop-blur-md transition hover:bg-white/20"
+              >
+                {cta2.icon && <span aria-hidden>{cta2.icon}</span>}
+                {cta2.label}
+              </a>
+            )}
+          </div>
+
+          {/* Glass proof cards: avatar stack + headline number */}
+          {proof.length > 0 && (
+            <div className={`mt-10 flex flex-wrap gap-4 ${left ? "" : "justify-center"}`}>
+              {proof.map((card, i) => {
+                const avatars = [card.avatar1, card.avatar2, card.avatar3].filter(Boolean) as string[];
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3.5 rounded-2xl border border-white/15 bg-white/10 px-5 py-3.5 text-left shadow-xl backdrop-blur-md"
+                  >
+                    {avatars.length > 0 && (
+                      <div className="flex -space-x-3">
+                        {avatars.map((avatar) => (
+                          <img key={avatar} src={avatar} alt="" className="h-11 w-11 rounded-full border-2 border-white/70 object-cover" loading="lazy" />
+                        ))}
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-lg font-bold leading-tight">{card.value}</p>
+                      <p className="text-sm text-white/70">{card.label}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Glass promo banner (app links, offers, announcements) */}
+          {(banner.title || bannerCta.label) && (
+            <div className="mt-8 flex flex-wrap items-center gap-5 rounded-2xl border border-white/15 bg-white/10 p-5 text-left shadow-2xl backdrop-blur-md">
+              <div className="min-w-0 flex-1">
+                {banner.label && (
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-accent,#22d3ee)]">{banner.label}</p>
+                )}
+                {banner.title && <p className="mt-1 text-lg font-bold">{banner.title}</p>}
+                {bannerLinks.length > 0 && (
+                  <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-white/80">
+                    {bannerLinks.map((link) => (
+                      <a key={link.label} href={link.url} className="transition hover:text-white">
+                        {link.label}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {bannerCta.label && (
+                <a
+                  href={bannerCta.url ?? "#"}
+                  className="btn inline-flex items-center gap-2 rounded-lg bg-[var(--color-accent,#22d3ee)] px-6 py-3 font-semibold text-[var(--color-secondary,#0f172a)] shadow-lg transition hover:-translate-y-0.5"
+                >
+                  {bannerCta.label} <span aria-hidden>→</span>
+                </a>
+              )}
+            </div>
           )}
         </div>
       </div>
