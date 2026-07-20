@@ -180,16 +180,28 @@ class WebsiteController extends Controller
                 $created[] = $page;
             }
 
-            // Starter navigation linking the scaffolded pages, if the site has none yet.
-            if ($created !== [] && ! $website->menus()->where('location', 'header_primary')->exists()) {
-                $menu = $website->menus()->create(['name' => 'Main navigation', 'location' => 'header_primary']);
+            // Navigation: create a starter menu, or append to the existing one, so
+            // scaffolded pages are always reachable (re-activating a template on a
+            // live site must not leave its new pages orphaned).
+            if ($created !== []) {
+                $menu = $website->menus()->firstOrCreate(
+                    ['location' => 'header_primary'],
+                    ['name' => 'Main navigation']
+                );
 
-                foreach ($created as $i => $page) {
+                $linked = $menu->allItems()->pluck('page_id')->filter()->all();
+                $position = (int) $menu->allItems()->max('position');
+
+                foreach ($created as $page) {
+                    if (in_array($page->id, $linked, true)) {
+                        continue;
+                    }
+
                     $menu->allItems()->create([
                         'label' => $page->page_type === 'home' ? 'Home' : $page->title,
                         'page_id' => $page->id,
                         'target' => '_self',
-                        'position' => $i,
+                        'position' => ++$position,
                     ]);
                 }
             }
