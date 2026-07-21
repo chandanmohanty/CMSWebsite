@@ -86,6 +86,40 @@ function BackgroundVideo({ src, poster }: { src: string; poster?: string }) {
 const str = (v: unknown): string => (typeof v === "string" ? v : "");
 const items = (v: unknown): Item[] => (Array.isArray(v) ? (v as Item[]) : []);
 
+/** "A|B" per line -> pairs. Used for feature lists and inline stats that stay editable as plain text. */
+function parsePairs(raw: unknown): { a: string; b: string }[] {
+  return str(raw)
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [a, b] = line.split("|");
+      return { a: (a ?? "").trim(), b: (b ?? "").trim() };
+    })
+    .filter((pair) => pair.a);
+}
+
+/** Centered heading with the accent underline used across these marketing sections. */
+function SectionHeading({ eyebrow, heading, subheading, light }: { eyebrow?: string; heading?: string; subheading?: string; light?: boolean }) {
+  if (!heading && !subheading) return null;
+  return (
+    <div className="mx-auto max-w-2xl text-center">
+      {eyebrow && <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-accent,#22d3ee)]">{eyebrow}</p>}
+      {heading && (
+        <h2 className={`mt-1.5 text-3xl font-bold ${light ? "text-white" : ""}`}>{highlight(heading)}</h2>
+      )}
+      <span className="mx-auto mt-3 block h-1 w-16 rounded-full bg-[var(--color-accent,#22d3ee)]" aria-hidden />
+      {subheading && <p className={`mt-4 ${light ? "text-white/70" : "text-[var(--color-muted,#475569)]"}`}>{subheading}</p>}
+    </div>
+  );
+}
+
+const CheckIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden>
+    <path d="M20 6 9 17l-5-5" />
+  </svg>
+);
+
 function Hero({ content, settings }: BlockProps) {
   const cta = (content?.cta ?? {}) as Cta;
   const cta2 = (content?.cta2 ?? {}) as Cta;
@@ -280,25 +314,35 @@ function RichText({ content }: BlockProps) {
 
 function ServicesGrid({ content, settings }: BlockProps) {
   const glass = settings?.variant === "glass";
+  const bordered = settings?.variant === "bordered";
   const cards = items(content?.items);
+  const cols = cards.length % 4 === 0 ? "lg:grid-cols-4" : "lg:grid-cols-3";
 
   const grid = (
     <div className="mx-auto max-w-6xl px-6">
-      <h2 className={`text-center text-3xl font-bold ${glass ? "text-white" : ""}`}>{str(content?.heading)}</h2>
-      {str(content?.subheading) && (
-        <p className={`mx-auto mt-3 max-w-2xl text-center ${glass ? "text-white/75" : "text-[var(--color-muted,#475569)]"}`}>{str(content?.subheading)}</p>
-      )}
-      <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <SectionHeading heading={str(content?.heading)} subheading={str(content?.subheading)} light={glass} />
+      <div className={`mt-12 grid gap-6 sm:grid-cols-2 ${cols}`}>
         {cards.map((item, i) => (
           <div
             key={i}
             className={
               glass
                 ? "rounded-2xl border border-white/15 bg-white/10 p-7 shadow-xl backdrop-blur-md transition hover:-translate-y-1 hover:bg-white/15"
-                : "rounded-2xl border border-[var(--color-border,#e2e8f0)] bg-[var(--color-surface,#ffffff)] p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                : bordered
+                  ? "rounded-2xl border border-[var(--color-border,#e2e8f0)] bg-[var(--color-surface,#ffffff)]/70 p-7 text-center shadow-sm backdrop-blur transition hover:-translate-y-1 hover:border-[var(--color-accent,#22d3ee)] hover:shadow-lg"
+                  : "rounded-2xl border border-[var(--color-border,#e2e8f0)] bg-[var(--color-surface,#ffffff)] p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
             }
           >
-            {item.icon && <span className="mb-3 block text-3xl" aria-hidden>{item.icon}</span>}
+            {item.icon &&
+              (bordered ? (
+                <span className="mx-auto mb-4 grid h-12 w-12 place-items-center text-3xl text-[var(--color-primary,#0e7490)]" aria-hidden>
+                  {item.icon}
+                </span>
+              ) : (
+                <span className="mb-3 block text-3xl" aria-hidden>
+                  {item.icon}
+                </span>
+              ))}
             <h3 className={`text-lg font-semibold ${glass ? "text-white" : ""}`}>{item.title}</h3>
             <p className={`mt-2 ${glass ? "text-white/75" : "text-[var(--color-muted,#475569)]"}`}>{item.text}</p>
           </div>
@@ -472,10 +516,102 @@ function CustomHtml({ content }: BlockProps) {
   return <section dangerouslySetInnerHTML={{ __html: str(content?.html) }} />;
 }
 
+/** Two side-by-side glass columns, each an icon + title + a checkmarked feature list. */
+function Comparison({ content }: BlockProps) {
+  const col1 = (content?.col1 ?? {}) as { icon?: string; title?: string; features?: string };
+  const col2 = (content?.col2 ?? {}) as { icon?: string; title?: string; features?: string };
+  const columns = [col1, col2].filter((col) => col.title);
+
+  return (
+    <section className="mx-auto max-w-6xl px-6 py-20">
+      <SectionHeading heading={str(content?.heading)} subheading={str(content?.subheading)} />
+      <div className="mt-12 grid gap-6 md:grid-cols-2">
+        {columns.map((col, i) => (
+          <div key={i} className="rounded-3xl border border-[var(--color-border,#e2e8f0)] bg-[var(--color-surface,#ffffff)]/70 p-8 shadow-lg backdrop-blur">
+            <div className="text-center">
+              {col.icon && (
+                <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[var(--color-accent,#22d3ee)] text-3xl text-[var(--color-secondary,#0f172a)]" aria-hidden>
+                  {col.icon}
+                </span>
+              )}
+              <h3 className="mt-4 text-2xl font-bold">{col.title}</h3>
+            </div>
+            <ul className="mt-7 space-y-5">
+              {parsePairs(col.features).map((feature) => (
+                <li key={feature.a} className="flex items-start gap-3.5">
+                  <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[var(--color-accent,#22d3ee)] text-[var(--color-secondary,#0f172a)]" aria-hidden>
+                    <CheckIcon />
+                  </span>
+                  <div>
+                    <p className="font-semibold">{feature.a}</p>
+                    {feature.b && <p className="mt-0.5 text-sm text-[var(--color-muted,#475569)]">{feature.b}</p>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/** Dark process section: glass icon cards over a numbered/qualitative flow, plus an optional glass promise card with inline stats. */
+function Process({ content }: BlockProps) {
+  const cards = items(content?.items);
+  const promise = (content?.promise ?? {}) as { title?: string; text?: string; stats?: string };
+  const stats = parsePairs(promise.stats);
+  const cols = cards.length % 4 === 0 ? "lg:grid-cols-4" : "lg:grid-cols-3";
+
+  return (
+    <section className="relative overflow-hidden bg-[var(--color-secondary,#0f172a)] py-20 text-white">
+      <div className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-white/5 blur-3xl" aria-hidden />
+      <div className="pointer-events-none absolute -right-16 bottom-0 h-80 w-80 rounded-full bg-[var(--color-accent,#22d3ee)]/15 blur-3xl" aria-hidden />
+
+      <div className="relative mx-auto max-w-6xl px-6">
+        <SectionHeading heading={str(content?.heading)} subheading={str(content?.subheading)} light />
+
+        <div className={`mt-12 grid gap-5 sm:grid-cols-2 ${cols}`}>
+          {cards.map((card, i) => (
+            <article key={i} className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center shadow-xl backdrop-blur-md transition hover:-translate-y-1 hover:bg-white/10">
+              {card.icon && (
+                <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-white/10 text-2xl text-[var(--color-accent,#22d3ee)]" aria-hidden>
+                  {card.icon}
+                </span>
+              )}
+              <h3 className="mt-4 text-lg font-bold">{card.title}</h3>
+              {card.text && <p className="mt-2 text-sm text-white/70">{card.text}</p>}
+            </article>
+          ))}
+        </div>
+
+        {(promise.title || promise.text || stats.length > 0) && (
+          <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-8 text-center shadow-2xl backdrop-blur-md sm:p-10">
+            {promise.title && <h3 className="text-2xl font-bold">{promise.title}</h3>}
+            {promise.text && <p className="mx-auto mt-3 max-w-3xl text-white/75">{promise.text}</p>}
+            {stats.length > 0 && (
+              <div className="mt-8 flex flex-wrap items-start justify-center gap-x-14 gap-y-6">
+                {stats.map((stat) => (
+                  <div key={stat.a}>
+                    <p className="text-3xl font-bold text-[var(--color-accent,#22d3ee)]">{stat.a}</p>
+                    <p className="mt-1 text-sm text-white/70">{stat.b}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 const BLOCKS: Record<string, (props: BlockProps) => JSX.Element | null> = {
   hero: Hero,
   stats: Stats,
   two_panel: TwoPanel,
+  comparison: Comparison,
+  process: Process,
   roadmap: Roadmap,
   rich_text: RichText,
   services_grid: ServicesGrid,

@@ -154,6 +154,78 @@ export const BLOCK_DEFS: BlockDef[] = [
     ] },
   },
   {
+    type: "comparison",
+    label: "Comparison",
+    icon: "⚖️",
+    description: "Two glass columns, each an icon + title + checkmarked feature list",
+    fields: [
+      { path: "heading", label: "Heading", type: "text" },
+      { path: "subheading", label: "Subheading", type: "textarea" },
+      { path: "col1.icon", label: "Column 1 icon (emoji)", type: "text" },
+      { path: "col1.title", label: "Column 1 title", type: "text" },
+      { path: "col1.features", label: "Column 1 features — one per line: Title|Description", type: "textarea" },
+      { path: "col2.icon", label: "Column 2 icon (emoji)", type: "text" },
+      { path: "col2.title", label: "Column 2 title", type: "text" },
+      { path: "col2.features", label: "Column 2 features — one per line: Title|Description", type: "textarea" },
+    ],
+    defaultContent: {
+      heading: "How we help",
+      subheading: "Tailored support for every kind of client.",
+      col1: {
+        icon: "🏢",
+        title: "For businesses",
+        features:
+          "Expert guidance|Contracts, compliance and advisory from experienced lawyers.\nClear pricing|Fixed fees agreed before any work begins.\nAll business types|From startups to established enterprises.\nOngoing support|A long-term partner, not a one-off service.",
+      },
+      col2: {
+        icon: "👤",
+        title: "For individuals",
+        features:
+          "Affordable advice|Transparent, easy-to-understand pricing.\nComplete privacy|Your matter stays confidential throughout.\nAvailable anywhere|Help from anywhere, on any device.\nThe right match|Paired with a lawyer who fits your matter.",
+      },
+    },
+  },
+  {
+    type: "process",
+    label: "Process steps",
+    icon: "🛡️",
+    description: "Dark section with glass icon cards and an optional promise card with stats",
+    fields: [
+      { path: "heading", label: "Heading", type: "text" },
+      { path: "subheading", label: "Subheading", type: "textarea" },
+      { path: "promise.title", label: "Promise card title", type: "text" },
+      { path: "promise.text", label: "Promise card text", type: "textarea" },
+      { path: "promise.stats", label: "Promise stats — one per line: Value|Label", type: "textarea" },
+    ],
+    repeater: {
+      path: "items",
+      label: "Cards",
+      itemLabel: "card",
+      titleField: "title",
+      fields: [
+        { key: "icon", label: "Icon (emoji)", type: "text" },
+        { key: "title", label: "Title", type: "text" },
+        { key: "text", label: "Description", type: "textarea" },
+      ],
+      newItem: { icon: "✅", title: "New step", text: "" },
+    },
+    defaultContent: {
+      heading: "How it works",
+      subheading: "A careful process you can rely on.",
+      items: [
+        { icon: "🔍", title: "Careful selection", text: "We assess expertise and track record before anyone joins." },
+        { icon: "💬", title: "In-depth interview", text: "We check knowledge, experience and communication." },
+        { icon: "📋", title: "Strict approval", text: "Only those who pass our full review are approved." },
+        { icon: "⭐", title: "Client-first focus", text: "Verified professionals, matched to your matter." },
+      ],
+      promise: {
+        title: "Our quality promise",
+        text: "Everyone on our platform is personally reviewed by our team, so you receive professional, ethical and competent advice every time.",
+        stats: "100%|Reviewed\n2,000+|Specialists\n24/7|Support",
+      },
+    },
+  },
+  {
     type: "roadmap",
     label: "Roadmap",
     icon: "🗺️",
@@ -220,6 +292,7 @@ export const BLOCK_DEFS: BlockDef[] = [
         type: "select",
         options: [
           { value: "standard", label: "Light cards" },
+          { value: "bordered", label: "Bordered / centered (core values)" },
           { value: "glass", label: "Glass on dark gradient" },
         ],
       },
