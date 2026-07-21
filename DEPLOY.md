@@ -164,10 +164,39 @@ create the **Node.js app** in hPanel pointing at `domains/athithi24.com/nextapp`
 
 ### After that
 
-Every `git push` to `main` runs two parallel jobs: **Deploy Laravel API** (composer
-install → rsync code, preserving `.env`/`storage` → migrate + cache) and **Deploy
-Next.js frontend** (build standalone → rsync bundle → restart the Node app). Watch
-them under the repo's **Actions** tab; trigger manually anytime with *Run workflow*.
+Every `git push` to `main` deploys the **Laravel API** automatically: composer
+install in the runner → rsync the code (preserving `.env`, `storage/` and the
+bootstrap cache) → `migrate --force` + config/route cache. Watch it under the
+repo's **Actions** tab; trigger manually anytime with *Run workflow*.
+
+### Frontend releases (manual, by design)
+
+Hostinger's Node.js build system owns the frontend — it installs dependencies and
+runs `next build` on the server from an uploaded source archive, then serves it
+under Passenger. A second deploy path (CI rsync) would fight it, so the frontend
+is deliberately not in the workflow.
+
+This matters far less than it sounds: **all CMS content is fetched from the API at
+runtime**, so editing pages, templates, menus or media never needs a redeploy. Only
+frontend *code* changes do.
+
+To release frontend code:
+
+```powershell
+pwsh ./scripts/package-frontend.ps1
+```
+
+That produces a source-only `.tar.gz`. Upload it via hPanel → **Advanced → Node.js**
+(or the Hostinger deploy API). The script encodes three things that each broke a
+real deployment:
+
+- **excludes `.env.local`** — it outranks `.env.production` even in production
+  builds, so shipping it points the live site at `localhost`
+- **uses `.tar.gz`, not `.zip`** — `Compress-Archive` writes Windows attributes
+  instead of Unix mode bits, and the extracted `[[...slug]]` route folder loses its
+  traverse permission (`EACCES: scandir …`)
+- **keeps entries at the archive root** — Hostinger's settings resolver looks for
+  `package.json` at the top level and 500s if it's nested under `./`
 
 ## Caveats on shared Cloud hosting
 
