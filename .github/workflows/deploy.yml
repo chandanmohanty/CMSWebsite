@@ -48,6 +48,19 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> ~/.ssh/known_hosts
 
+      # Create the app dir + Laravel's writable skeleton up front, so rsync has
+      # a target and the server never needs a manual git clone. These dirs are
+      # excluded from the rsync below, so uploaded media survives every deploy.
+      - name: Prepare server directories
+        run: |
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "mkdir -p \
+            ~/$BACKEND_DEST/storage/app/public \
+            ~/$BACKEND_DEST/storage/framework/cache/data \
+            ~/$BACKEND_DEST/storage/framework/sessions \
+            ~/$BACKEND_DEST/storage/framework/views \
+            ~/$BACKEND_DEST/storage/logs \
+            ~/$BACKEND_DEST/bootstrap/cache"
+
       # --delete keeps the server tidy; the excludes protect server-owned
       # state: the .env, uploaded media + logs in storage/, the compiled
       # bootstrap cache, and the public/storage symlink.
@@ -62,14 +75,20 @@ jobs:
             -e "ssh -p $SSH_PORT" \
             backend/ "$SSH_USER@$SSH_HOST:$BACKEND_DEST/"
 
+      # Migrate only once .env exists (it holds APP_KEY + DB creds and is never
+      # in the repo). Until then the code still deploys; the run stays green.
       - name: Migrate, cache config, ensure storage link
         run: |
           ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "\
             cd ~/$BACKEND_DEST && \
-            php artisan migrate --force && \
-            php artisan config:cache && \
-            php artisan route:cache && \
-            { [ -L public/storage ] || ln -s ../storage/app/public public/storage; }"
+            { [ -L public/storage ] || ln -s ../storage/app/public public/storage; } && \
+            if [ -f .env ]; then \
+              php artisan migrate --force && \
+              php artisan config:cache && \
+              php artisan route:cache; \
+            else \
+              echo '>> No .env on the server yet — code is deployed, skipping migrate. Create .env and run migrate --seed once (see DEPLOY.md), then re-run.'; \
+            fi"
 
   frontend:
     name: Deploy Next.js frontend
