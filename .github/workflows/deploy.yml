@@ -1,0 +1,119 @@
+name: Deploy to Hostinger
+
+# Every push to main builds both apps in CI and deploys them to the
+# Cloud Startup account over SSH. Building in the runner means the server
+# never needs npm or composer, and private-repo checkout just works.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # allows a manual "Run workflow" from the Actions tab
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  SSH_HOST: ${{ secrets.SSH_HOST }}
+  SSH_PORT: ${{ secrets.SSH_PORT }}
+  SSH_USER: ${{ secrets.SSH_USER }}
+  BACKEND_DEST: domains/api.athithi24.com/repo/backend
+  FRONTEND_DEST: domains/athithi24.com/nextapp
+
+jobs:
+  backend:
+    name: Deploy Laravel API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, bcmath, gd, intl, zip, pdo_mysql, fileinfo, curl
+          tools: composer:v2
+
+      - name: Install PHP dependencies
+        working-directory: backend
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+      - name: Load deploy SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Trust the server host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      # --delete keeps the server tidy; the excludes protect server-owned
+      # state: the .env, uploaded media + logs in storage/, the compiled
+      # bootstrap cache, and the public/storage symlink.
+      - name: Deploy backend code
+        run: |
+          rsync -az --delete \
+            --exclude='.git' \
+            --exclude='.env' \
+            --exclude='/storage/' \
+            --exclude='/bootstrap/cache/' \
+            --exclude='/public/storage' \
+            -e "ssh -p $SSH_PORT" \
+            backend/ "$SSH_USER@$SSH_HOST:$BACKEND_DEST/"
+
+      - name: Migrate, cache config, ensure storage link
+        run: |
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "\
+            cd ~/$BACKEND_DEST && \
+            php artisan migrate --force && \
+            php artisan config:cache && \
+            php artisan route:cache && \
+            { [ -L public/storage ] || ln -s ../storage/app/public public/storage; }"
+
+  frontend:
+    name: Deploy Next.js frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # NEXT_PUBLIC_* are inlined at build time — set here, not on the server.
+      - name: Install & build standalone bundle
+        working-directory: frontend
+        env:
+          NEXT_PUBLIC_API_URL: https://api.athithi24.com
+          NEXT_PUBLIC_SITE_DOMAIN: athithi24.com
+        run: |
+          npm ci
+          npm run build
+          cp -r .next/static .next/standalone/.next/static
+          cp -r public .next/standalone/public
+
+      - name: Load deploy SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Trust the server host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy frontend bundle
+        run: |
+          rsync -az --delete \
+            -e "ssh -p $SSH_PORT" \
+            frontend/.next/standalone/ "$SSH_USER@$SSH_HOST:$FRONTEND_DEST/"
+
+      - name: Restart the Node app (Passenger)
+        run: |
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "\
+            mkdir -p ~/$FRONTEND_DEST/tmp && \
+            touch ~/$FRONTEND_DEST/tmp/restart.txt"

@@ -129,6 +129,46 @@ NEXT_PUBLIC_SITE_DOMAIN=athithi24.com
 
 ---
 
+## Automatic deployment (GitHub Actions)
+
+`.github/workflows/deploy.yml` builds both apps in the CI runner and deploys
+them over SSH on every push to `main`. This keeps npm/composer off the server
+and works with the private repo (CI checks it out with its own token).
+
+### One-time setup
+
+**1. SSH key for the deploy.** On your machine:
+
+```bash
+ssh-keygen -t ed25519 -f athithi24_deploy -C "github-actions" -N ""
+```
+
+- Add the **public** key (`athithi24_deploy.pub`) to Hostinger: hPanel → Advanced → **SSH Access** → *Manage SSH keys* → Import.
+- Note the SSH **host** and **port** shown on that SSH Access page (Hostinger shared/cloud usually uses port **65002**).
+
+**2. GitHub repository secrets** (repo → Settings → Secrets and variables → Actions → *New repository secret*):
+
+| Secret | Value |
+|---|---|
+| `SSH_HOST` | the SSH host from hPanel |
+| `SSH_PORT` | `65002` (or whatever hPanel shows) |
+| `SSH_USER` | `u778726719` |
+| `SSH_KEY`  | the **private** key file contents (`athithi24_deploy`) |
+
+**3. Bootstrap the server once** (the workflow assumes `.env`, the DB schema,
+and the symlinks already exist — it never touches `.env` or `storage/`). Run the
+**backend block** above once over SSH to create `.env`, run `migrate --seed`, and
+create the `public_html → repo/backend/public` + `public/storage` symlinks. Then
+create the **Node.js app** in hPanel pointing at `domains/athithi24.com/nextapp`
+(the first workflow run fills that folder).
+
+### After that
+
+Every `git push` to `main` runs two parallel jobs: **Deploy Laravel API** (composer
+install → rsync code, preserving `.env`/`storage` → migrate + cache) and **Deploy
+Next.js frontend** (build standalone → rsync bundle → restart the Node app). Watch
+them under the repo's **Actions** tab; trigger manually anytime with *Run workflow*.
+
 ## Caveats on shared Cloud hosting
 
 - **ISR caching** writes to `.next/cache`; on shared hosting the Node process may recycle and drop it. Pages still render correctly (the Laravel API caches server-side for 5 minutes and busts on publish) — worst case is an occasional slower first load. For strict freshness, lower the `revalidate` value in `src/lib/api.ts`.
