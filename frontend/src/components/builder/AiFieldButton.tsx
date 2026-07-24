@@ -30,6 +30,15 @@ export function AiFieldButton({ api, value, fieldLabel, blockLabel, onResult }: 
     setError(null);
   };
 
+  // This button lives inside the field's <label>, whose first labelable
+  // descendant is this button — so any click bubbling to the label gets
+  // re-dispatched here, re-toggling the menu. Stop propagation (and the
+  // label's default activation) on every control so clicks act once.
+  const stop = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   const run = async (task: string, input: string) => {
     setLoading(task);
     setError(null);
@@ -60,7 +69,10 @@ export function AiFieldButton({ api, value, fieldLabel, blockLabel, onResult }: 
     <span className="relative inline-block">
       <button
         type="button"
-        onClick={() => (open ? close() : setOpen(true))}
+        onClick={(e) => {
+          stop(e);
+          open ? close() : setOpen(true);
+        }}
         className={`rounded px-1.5 py-0.5 text-xs font-medium ${open ? "bg-cyan-100 text-cyan-800" : "text-cyan-700 hover:bg-cyan-50"}`}
         title="AI assist"
       >
@@ -85,23 +97,23 @@ export function AiFieldButton({ api, value, fieldLabel, blockLabel, onResult }: 
                   className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:border-cyan-500 focus:outline-none"
                 />
                 <span className="flex gap-1.5">
-                  <button type="button" onClick={generate} disabled={!prompt.trim()} className="flex-1 rounded-lg bg-cyan-700 py-1.5 text-xs font-semibold text-white hover:bg-cyan-800 disabled:opacity-40">
+                  <button type="button" onClick={(e) => { stop(e); generate(); }} disabled={!prompt.trim()} className="flex-1 rounded-lg bg-cyan-700 py-1.5 text-xs font-semibold text-white hover:bg-cyan-800 disabled:opacity-40">
                     Generate
                   </button>
-                  <button type="button" onClick={() => setPrompting(false)} className="rounded-lg border border-slate-300 px-2 py-1.5 text-xs">
+                  <button type="button" onClick={(e) => { stop(e); setPrompting(false); }} className="rounded-lg border border-slate-300 px-2 py-1.5 text-xs">
                     Back
                   </button>
                 </span>
               </span>
             ) : (
               <>
-                <button type="button" onClick={() => setPrompting(true)} className={menuItem}>
+                <button type="button" onClick={(e) => { stop(e); setPrompting(true); }} className={menuItem}>
                   ✍️ Write with AI…
                 </button>
-                <button type="button" onClick={() => void run("rewrite", value)} disabled={!value.trim()} className={menuItem}>
+                <button type="button" onClick={(e) => { stop(e); void run("rewrite", value); }} disabled={!value.trim()} className={menuItem}>
                   🔁 Rewrite
                 </button>
-                <button type="button" onClick={() => void run("improve_grammar", value)} disabled={!value.trim()} className={menuItem}>
+                <button type="button" onClick={(e) => { stop(e); void run("improve_grammar", value); }} disabled={!value.trim()} className={menuItem}>
                   ✅ Fix grammar
                 </button>
               </>
